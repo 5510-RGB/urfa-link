@@ -1,0 +1,8 @@
+.git
+__pycache__
+*.pyc
+.env
+.system_generated
+urfa_link.db
+static/uploads/*
+!static/uploads/.gitkeep

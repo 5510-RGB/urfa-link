@@ -1,0 +1,123 @@
+Testing Registration with Persistent DB...
+Registered DB User 1: Ahmet Yilmaz Test with TC: 27308189503
+
+Testing Matches for DB User 1 (ID: 225a38cb-3573-47ba-982d-5b33f1154a40)...
+Traceback (most recent call last):
+  File "C:\Users\mehme\OneDrive\Masaüstü\antigraviti denme\urfa_link\test_logic.py", line 104, in <module>
+    run_db_tests()
+    ~~~~~~~~~~~~^^
+  File "C:\Users\mehme\OneDrive\Masaüstü\antigraviti denme\urfa_link\test_logic.py", line 91, in run_db_tests
+    matches_res = client.get(f"/users/{user1['id']}/matches")
+  File "C:\Users\mehme\AppData\Local\Programs\Python\Python313\Lib\site-packages\starlette\testclient.py", line 473, in get
+    return super().get(
+           ~~~~~~~~~~~^
+        url,
+        ^^^^
+    ...<6 lines>...
+        extensions=extensions,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\mehme\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpx\_client.py", line 1054, in get
+    return self.request(
+           ~~~~~~~~~~~~^
+        "GET",
+        ^^^^^^
+    ...<7 lines>...
+        extensions=extensions,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\mehme\AppData\Local\Programs\Python\Python313\Lib\site-packages\starlette\testclient.py", line 445, in request
+    return super().request(
+           ~~~~~~~~~~~~~~~^
+        method,
+        ^^^^^^^
+    ...<11 lines>...
+        extensions=extensions,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\mehme\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpx\_client.py", line 827, in request
+    return self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mehme\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpx\_client.py", line 914, in send
+    response = self._send_handling_auth(
+        request,
+    ...<2 lines>...
+        history=[],
+    )
+  File "C:\Users\mehme\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpx\_client.py", line 942, in _send_handling_auth
+    response = self._send_handling_redirects(
+        request,
+        follow_redirects=follow_redirects,
+        history=history,
+    )
+  File "C:\Users\mehme\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpx\_client.py", line 979, in _send_handling_redirects
+    response = self._send_single_request(request)
+  File "C:\Users\mehme\AppData\Local\Programs\Python\Python313\Lib\site-packages\httpx\_client.py", line 1015, in _send_single_request
+    response = transport.handle_request(request)
+  File "C:\Users\mehme\AppData\Local\Programs\Python\Python313\Lib\site-packages\starlette\testclient.py", line 348, in handle_request
+    raise exc
+  File "C:\Users\mehme\AppData\Local\Programs\Python\Python313\Lib\site-packages\starlette\testclient.py", line 345, in handle_request
+    portal.call(self.app, scope, receive, send)
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mehme\AppData\Local\Programs\Python\Python313\Lib\site-packages\anyio\from_thread.py", line 334, in call
+    return cast(T_Retval, self.start_task_soon(func, *args).result())
+                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\mehme\AppData\Local\Programs\Python\Python313\Lib\concurrent\futures\_base.py", line 456, in result
+    return self.__get_result()
+           ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\mehme\AppData\Local\Programs\Python\Python313\Lib\concurrent\futures\_base.py", line 401, in __get_result
+    raise self._exception
+  File "C:\Users\mehme\AppData\Local\Programs\Python\Python313\Lib\site-packages\anyio\from_thread.py", line 259, in _call_func
+    retval = await retval_or_awaitable
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mehme\AppData\Local\Programs\Python\Python313\Lib\site-packages\fastapi\applications.py", line 1160, in __call__
+    await super().__call__(scope, receive, send)
+  File "C:\Users\mehme\AppData\Local\Programs\Python\Python313\Lib\site-packages\starlette\applications.py", line 107, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\mehme\AppData\Local\Programs\Python\Python313\Lib\site-packages\starlette\middleware\errors.py", line 186, in __call__
+    raise exc
+  File "C:\Users\mehme\AppData\Local\Programs\Python\Python313\Lib\site-packages\starlette\middleware\errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "C:\Users\mehme\AppData\Local\Programs\Python\Python313\Lib\site-packages\starlette\middleware\exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "C:\Users\mehme\AppData\Local\Programs\Python\Python313\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\mehme\AppData\Local\Programs\Python\Python313\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\mehme\AppData\Local\Programs\Python\Python313\Lib\site-packages\fastapi\middleware\asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "C:\Users\mehme\AppData\Local\Programs\Python\Python313\Lib\site-packages\starlette\routing.py", line 716, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\mehme\AppData\Local\Programs\Python\Python313\Lib\site-packages\starlette\routing.py", line 736, in app
+    await route.handle(scope, receive, send)
+  File "C:\Users\mehme\AppData\Local\Programs\Python\Python313\Lib\site-packages\starlette\routing.py", line 290, in handle
+    await self.app(scope, receive, send)
+  File "C:\Users\mehme\AppData\Local\Programs\Python\Python313\Lib\site-packages\fastapi\routing.py", line 129, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "C:\Users\mehme\AppData\Local\Programs\Python\Python313\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\mehme\AppData\Local\Programs\Python\Python313\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\mehme\AppData\Local\Programs\Python\Python313\Lib\site-packages\fastapi\routing.py", line 115, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "C:\Users\mehme\AppData\Local\Programs\Python\Python313\Lib\site-packages\fastapi\routing.py", line 630, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+    )
+    ^
+  File "C:\Users\mehme\AppData\Local\Programs\Python\Python313\Lib\site-packages\fastapi\routing.py", line 323, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mehme\OneDrive\Masaüstü\antigraviti denme\urfa_link\routers\users.py", line 106, in get_matches
+    similarity = graph_db.calculate_similarity(user.interest_vector, other_user.interest_vector)
+  File "C:\Users\mehme\OneDrive\Masaüstü\antigraviti denme\urfa_link\services\graph_engine.py", line 33, in calculate_similarity
+    if np.linalg.norm(v1) == 0 or np.linalg.norm(v2) == 0:
+       ~~~~~~~~~~~~~~^^^^
+  File "C:\Users\mehme\AppData\Local\Programs\Python\Python313\Lib\site-packages\numpy\linalg\_linalg.py", line 2776, in norm
+    x = x.astype(float)
+ValueError: could not convert string to float: np.str_('[0.2, 0.4, 0.75, 0.85, 0.2]')

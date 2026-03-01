@@ -1,0 +1,7 @@
+(sqlite3.OperationalError) no such column: users.profile_image
+[SQL: SELECT users.id AS users_id, users.name AS users_name, users.tc_kimlik AS users_tc_kimlik, users.phone AS users_phone, users.district AS users_district, users.education AS users_education, users.bio AS users_bio, users.hashed_password AS users_hashed_password, users.interest_vector AS users_interest_vector, users.latitude AS users_latitude, users.longitude AS users_longitude, users.reset_otp AS users_reset_otp, users.profile_image AS users_profile_image 
+FROM users 
+WHERE users.tc_kimlik = ?
+ LIMIT ? OFFSET ?]
+[parameters: ('12345678901', 1, 0)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)

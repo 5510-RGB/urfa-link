@@ -1,0 +1,50 @@
+# Urfa-Link Deployment Rehberi
+
+Urfa-Link projesini yayına almak (Deploy etmek) için gereken tüm Docker dosyaları ([Dockerfile](file:///c:/Users/mehme/OneDrive/Masa%C3%BCst%C3%BC/antigraviti%20denme/urfa_link/Dockerfile), [.dockerignore](file:///c:/Users/mehme/OneDrive/Masa%C3%BCst%C3%BC/antigraviti%20denme/urfa_link/.dockerignore), [docker-compose.yml](file:///c:/Users/mehme/OneDrive/Masa%C3%BCst%C3%BC/antigraviti%20denme/urfa_link/docker-compose.yml)) hazırlandı. Bu dosyalar sayesinde uygulamanız herhangi bir sunucuda yerel ortamınızdaki gibi sorunsuz bir şekilde çalışabilir.
+
+## Yayına Alma Stratejileri
+
+### 1. Seçenek: Render.com (Ücretsiz / Kolay Başlangıç)
+Render, Dockerfile'ı doğrudan okuyup sunucuyu sizin yerinize otomatik ayarlayan bir bulut platformudur.
+
+1.  GitHub veya GitLab'de boş bir repository açıp projenizi oraya yükleyin (`git push`).
+2.  [Render.com](https://render.com)'a giriş yapın ve "New Web Service" seçeneğine tıklayın.
+3.  GitHub repository'nizi bağlayın.
+4.  Render projenizdeki [Dockerfile](file:///c:/Users/mehme/OneDrive/Masa%C3%BCst%C3%BC/antigraviti%20denme/urfa_link/Dockerfile)'ı otomatik olarak fark edecektir.
+5.  **Environment Variables** (Ortam Değişkenleri) bölümünde `GEMINI_API_KEY` değerinizi girmeyi unutmayın.
+6.  `Create Web Service` butonuna basın. Render projeyi derleyecek ve size `urfa-link.onrender.com` gibi bir adres verecektir.
+
+### 2. Seçenek: Kendi VPS Sunucunuz (DigitalOcean, Hetzner, AWS EC2, vb.)
+Kendi kiraladığınız bir Linux (Ubuntu/Debian) sunucunuz varsa, projenizi doğrudan oraya kurabilir ve `urfa-link.com` gibi kendi alan adınıza bağlayabilirsiniz.
+
+#### Adım Adım Sunucu Kurulumu (SSH ile Terminal Üzerinden)
+
+**1. Sunucuya Bağlanın**
+```bash
+ssh root@SUNUCU_IP_ADRESINIZ
+```
+
+**2. Docker'ı Kurun**
+```bash
+sudo apt update
+sudo apt install docker.io docker-compose -y
+```
+
+**3. Projeyi Sunucuya Aktarın**
+Projeyi GitHub üzerinden sunucuya klonlayın (`git clone ...`) veya dosyaları FTP/SCP ile sunucuya yükleyin.
+
+**4. Ortam Değişkenlerini Ayarlayın**
+Proje dizininde bir `.env` dosyası oluşturun:
+```bash
+nano .env
+# İçerisine şunu yazıp kaydedin (Ctrl+O, Enter, Ctrl+X):
+# GEMINI_API_KEY=sizin_gercek_api_anahtariniz
+```
+
+**5. Docker-Compose ile Projeyi Ayağa Kaldırın**
+```bash
+cd urfa_link # veya projenin dizini
+docker-compose up -d --build
+```
+
+Harika! Uygulamanız artık `IP_ADRESINIZ:8000` üzerinden yayında. Alan adı ve SSL sertifikası (HTTPS) ayarlamak isterseniz, bu Docker konteynerinin önüne ücretsiz Nginx ve Certbot (Let's Encrypt) kurabilirsiniz.

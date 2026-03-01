@@ -1,0 +1,17 @@
+# Yeni Ana Sayfa (Homepage) Tasarım Önerileri
+
+Mevcut ana sayfamız (Keşfet) listeleme mantığıyla çalışıyor. Sana 3 farklı modern mobil uygulama konsepti hazırlattım. Lütfen sana en sıcak gelen konsepti seç:
+
+## 1. Tinder Stili (Kaydırmalı Kartlar)
+Ekranda aynı anda sadece bir profilin büyükçe göründüğü, fotoğrafın ön planda olduğu tasarım. Modern, temiz ve dikkati dağıtmıyor. Alt kısımda butonlar bulunuyor.
+![Tinder Stili Konsept](C:\Users\mehme\.gemini\antigravity\brain\dfbaa2e9-ec3b-4723-88e0-c1b20fc119d4\tinder_style_ui_1772387902837.png)
+
+## 2. Instagram Stili (Aşağı Kaydırmalı Akış)
+Aşağıya doğru kaydırdıkça alt alta yeni fotoğrafların (post tarzında) geldiği klasik akış. İsim, kısa biyografi içeriği ve yüzdelik eşleşme oranları kartın üzerinde zarifçe görünüyor.
+![Instagram Stili Konsept](C:\Users\mehme\.gemini\antigravity\brain\dfbaa2e9-ec3b-4723-88e0-c1b20fc119d4\instagram_style_ui_1772387923329.png)
+
+## 3. Modern Grid Stili (İkili Sütun, Minimalist)
+Tek seferde ekrana daha fazla profilin sığabildiği, şık, temiz ve kare/dikdörtgen hatlara sahip ikili liste tarzı. Özellikle koyu tema (Dark Mode) üzerinde neon detaylarla çok iddialı görünebilir.
+![Grid Stili Konsept](C:\Users\mehme\.gemini\antigravity\brain\dfbaa2e9-ec3b-4723-88e0-c1b20fc119d4\grid_style_ui_1772387942884.png)
+
+Hangi tarz sana daha çok hitap ediyor? (1, 2, veya 3) Seçimine göre mevcut [index.html](file:///c:/Users/mehme/OneDrive/Masa%C3%BCst%C3%BC/antigraviti%20denme/urfa_link/static/index.html) ve [style.css](file:///c:/Users/mehme/OneDrive/Masa%C3%BCst%C3%BC/antigraviti%20denme/urfa_link/static/style.css) kodlarını o yönde yeniden kodlayacağım.

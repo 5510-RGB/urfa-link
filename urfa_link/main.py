@@ -1,0 +1,31 @@
+from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+from routers import users, messages, admin
+from database import engine, Base
+import models_db
+
+# Create database tables
+Base.metadata.create_all(bind=engine)
+
+app = FastAPI(
+    title="Urfa-Link API",
+    description="High-performance social networking project based on Anti-Gravity Core v2.0",
+    version="1.0.0"
+)
+
+app.include_router(users.router)
+app.include_router(messages.router)
+app.include_router(admin.router)
+
+# Mount static files
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+@app.get("/")
+async def root():
+    return FileResponse("static/index.html")
+
+if __name__ == "__main__":
+    import uvicorn
+    # run with `python main.py` or `uvicorn main:app --reload`
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

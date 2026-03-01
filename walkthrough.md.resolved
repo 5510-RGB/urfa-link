@@ -1,0 +1,50 @@
+# Urfa-Link Project Walkthrough
+
+Tebrikler, **Urfa-Link** projesi "Anti-Gravity Core v2.0" standartlarına uygun olarak başarıyla başlatıldı!
+
+## Gerçekleştirilen İşlemler (Changes Made)
+
+Proje için gerekli olan temel altyapı ve kod bileşenleri sıfırdan oluşturuldu:
+*   **Proje Temeli:** FastAPI uygulaması, [main.py](file:///c:/Users/mehme/OneDrive/Masa%C3%BCst%C3%BC/antigraviti%20denme/urfa_link/main.py) ve [requirements.txt](file:///c:/Users/mehme/OneDrive/Masa%C3%BCst%C3%BC/antigraviti%20denme/urfa_link/requirements.txt) ile başlatıldı.
+*   **Veri Modelleri ([models.py](file:///c:/Users/mehme/OneDrive/Masa%C3%BCst%C3%BC/antigraviti%20denme/urfa_link/models.py)):** Pydantic kullanılarak [UserNode](file:///c:/Users/mehme/OneDrive/Masa%C3%BCst%C3%BC/antigraviti%20denme/urfa_link/models.py#3-12), [RegistrationRequest](file:///c:/Users/mehme/OneDrive/Masa%C3%BCst%C3%BC/antigraviti%20denme/urfa_link/models.py#13-21) ve [MatchResult](file:///c:/Users/mehme/OneDrive/Masa%C3%BCst%C3%BC/antigraviti%20denme/urfa_link/models.py#22-27) modelleri oluşturuldu (T.C. Kimlik, İlçe, Eğitim, Vektör ve Konum içerir).
+*   **Graph Engine ([graph_engine.py](file:///c:/Users/mehme/OneDrive/Masa%C3%BCst%C3%BC/antigraviti%20denme/urfa_link/services/graph_engine.py)):** Spanner Graph veritabanı davranışını simüle eden, bellek içi bir motor oluşturuldu. Vektörler arası eşleşmeyi bulmak için `numpy` kullanılarak *Cosine Similarity* (Kosinüs Benzerliği) hesaplaması entegre edildi.
+*   **Geo Engine ([geo_engine.py](file:///c:/Users/mehme/OneDrive/Masa%C3%BCst%C3%BC/antigraviti%20denme/urfa_link/services/geo_engine.py)):** AG-GeoIndex ihtiyacını karşılamak için konumlar arası fiziksel mesafeyi ölçen Haversine algoritması (`haversine` kütüphanesi) entegre edildi.
+*   **Security Protocol ([security.py](file:///c:/Users/mehme/OneDrive/Masa%C3%BCst%C3%BC/antigraviti%20denme/urfa_link/services/security.py)):** AG-Shield gereksinimleri için mock T.C. Kimlik doğrulama fonksiyonu ve PQC (Post-Quantum Cryptography) yer tutucusu kodlandı.
+*   **AI Bio Analyzer ([ai_bio_analyzer.py](file:///c:/Users/mehme/OneDrive/Masa%C3%BCst%C3%BC/antigraviti%20denme/urfa_link/services/ai_bio_analyzer.py)):** Biyografilerden otomatik olarak ilgi alanı vektörü (Interest-Vector) çıkarmak üzere Gemini 1.5 Pro entegrasyonu sağlandı (`google-generativeai` ile).
+*   **API Uç Noktaları ([routers/users.py](file:///c:/Users/mehme/OneDrive/Masa%C3%BCst%C3%BC/antigraviti%20denme/urfa_link/routers/users.py)):**
+    *   `POST /users/register`: Kullanıcı Kaydı.
+    *   `GET /users/{user_id}/matches`: 20km mesafe ve %75 benzerlik barajlarını (Hobby-Match) sağlayan diğer kullanıcıları bulan uç nokta.
+
+## Test Edilenler (What Was Tested)
+
+*   Gerekli tüm 3. parti Python kütüphaneleri başarıyla yüklendi.
+*   Mantık testi betiği ([test_logic.py](file:///c:/Users/mehme/OneDrive/Masa%C3%BCst%C3%BC/antigraviti%20denme/urfa_link/test_logic.py)) üzerinden 3 adet mock kullanıcı kaydedildi.
+*   Kullanıcıların birbirlerine olan uzaklığı ve ilgi alanı benzerliği (Interest-Vector) başarıyla hesaplandı.
+
+## Doğrulama Sonuçları (Validation Results)
+
+*   [test_logic.py](file:///c:/Users/mehme/OneDrive/Masa%C3%BCst%C3%BC/antigraviti%20denme/urfa_link/test_logic.py) betiği herhangi bir hata (Exception / Syntax Error) vermeden tamamlandı.
+*   Eşleştirme sistemi başarıyla çalışıyor: "Ahmet" (Hilvan) ile "Mehmet" (Merkez - ama yakın koordinat) arasındaki mesafe ve simüle edilmiş benzerlik oranlarına dayanarak uygun adaylar hatasız şekilde filtreleniyor.
+
+**Projeyi çalıştırmak için terminalden aşağıdaki komutu kullanabilirsiniz:**
+```bash
+cd "c:\Users\mehme\OneDrive\Masaüstü\antigraviti denme\urfa_link"
+uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+```
+Ardından tarayıcınızdan `http://localhost:8000/docs` adresine giderek (Swagger UI) API'yi canlı olarak test edebilirsiniz.
+
+## Aşama 2: Veritabanı Entegrasyonu (Tamamlandı)
+
+Projenin veri depolama katmanı kalıcı bir SQLite veritabanı yapısına aktarılmıştır:
+*   **SQLAlchemy ORM** ve **SQLite** `urfa_link.db` dosyası üzerinden kuruldu.
+*   Tüm [graph_engine.py](file:///c:/Users/mehme/OneDrive/Masa%C3%BCst%C3%BC/antigraviti%20denme/urfa_link/services/graph_engine.py) (eşleştirme simülasyonları) ve FastAPI uç noktaları ([users.py](file:///c:/Users/mehme/OneDrive/Masa%C3%BCst%C3%BC/antigraviti%20denme/urfa_link/routers/users.py)) bellek yerine doğrudan veritabanına veri yazıp okuyacak şekilde güncellendi.
+*   (Python 3.13 ve Pydantic tip algoritmalarından kaynaklanan hatalar giderildi).
+
+## Aşama 3: Frontend Web Arayüzü (Tamamlandı)
+
+Projenin sadece arka planla sınırlı kalmaması için harika görünümlü bir kullanıcı arayüzü (UI) eklendi:
+*   **Modern Tasarım:** Gece (Dark mode) teması, 'Glassmorphism' efektleri (arkaplanı bulanıklaştıran cam paneller), neon yeşil vurgular ve CSS animasyonları.
+*   **Vanilla Web Stack:** Hiçbir harici framework kullanmadan tamamen saf HTML, CSS ve JavaScript (Fetch API) ile kodlandı.
+*   **Modüler Sunum:** `static/` klasöründeki dosyalar, FastAPI'nin `StaticFiles` özelliği ile `http://localhost:8000/` kök dizinine entegre edildi.
+
+Artık tarayıcıdan uygulamayı açtığınızda kayıt formu üzerinden bilgilerinizi kolayca girebilir, biyografinizi yazabilir ve saniyeler içinde size 20KM uzaklıkta, ortak ilgi alanlarına (%75 benzerlik) sahip profil kartlarını görebilirsiniz!

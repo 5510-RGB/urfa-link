@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Urfa-Link | Siber Sosyal Ağ</title>
+    <!-- Modern Font: Outfit -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+
+    <!-- Leaflet.js for Maps -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+
+    <!-- Background Animated Shapes -->
+    <div class="bg-shape shape1"></div>
+    <div class="bg-shape shape2"></div>
+
+    <div class="container" id="auth-container">
+        <!-- Header -->
+        <header>
+            <h1 class="glow-text">Urfa-Link</h1>
+            <p class="subtitle">Gençler için Yeni Nesil Eşleşme Ağı</p>
+        </header>
+
+        <!-- Main Content Area for Auth -->
+        <main id="auth-content">
+            <!-- Registration View -->
+            <section id="register-view" class="glass-panel active">
+                <h2>Aramıza Katıl</h2>
+                <form id="registerForm">
+                    <div class="form-group row">
+                        <div class="col">
+                            <label for="name">Ad Soyad</label>
+                            <input type="text" id="name" required placeholder="Eren Yeager">
+                        </div>
+                        <div class="col">
+                            <label for="tc_kimlik">T.C. Kimlik</label>
+                            <input type="text" id="tc_kimlik" required maxlength="11" pattern="\d{11}"
+                                placeholder="12345678901">
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <div class="col">
+                            <label for="password">Şifre</label>
+                            <input type="password" id="password" required placeholder="Güvenli bir şifre belirleyin">
+                        </div>
+                        <div class="col">
+                            <label for="phone">Telefon Numarası</label>
+                            <input type="tel" id="phone" required placeholder="05XX XXX XX XX">
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <div class="col">
+                            <label for="district">İlçe</label>
+                            <select id="district">
+                                <option value="Merkez">Merkez</option>
+                                <option value="Hilvan" selected>Hilvan</option>
+                                <option value="Siverek">Siverek</option>
+                                <option value="Viranşehir">Viranşehir</option>
+                            </select>
+                        </div>
+                        <div class="col">
+                            <label for="education">Eğitim</label>
+                            <select id="education">
+                                <option value="Fırat Üniversitesi">Fırat Üniversitesi</option>
+                                <option value="Harran Üniversitesi">Harran Üniversitesi</option>
+                                <option value="Lise" selected>Lise</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <div class="col">
+                            <label for="latitude">Enlem (Lat)</label>
+                            <input type="number" step="0.0001" id="latitude" required value="37.5833">
+                        </div>
+                        <div class="col">
+                            <label for="longitude">Boylam (Lng)</label>
+                            <input type="number" step="0.0001" id="longitude" required value="38.9500">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="bio">Biyografi (Kendinden Bahset)</label>
+                        <textarea id="bio" rows="3" required
+                            placeholder="Yazılım geliştirmeyi, bilim kurgu filmlerini ve doğa yürüyüşlerini severim..."></textarea>
+                    </div>
+
+                    <button type="submit" class="btn-primary" id="submitBtn">
+                        <span class="btn-text" id="btn-text">Kayıt Ol & Eşleş</span>
+                        <div class="spinner hidden" id="spinner"></div>
+                    </button>
+
+                    <div id="error-msg" class="error-msg hidden"></div>
+
+                    <div class="auth-links">
+                        <p>Zaten hesabın var mı? <a href="#" id="showLoginBtn">Giriş Yap</a></p>
+                    </div>
+                </form>
+            </section>
+
+            <!-- Login View -->
+            <section id="login-view" class="glass-panel hidden">
+                <h2>Giriş Yap</h2>
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="login_tc">T.C. Kimlik</label>
+                        <input type="text" id="login_tc" required maxlength="11" pattern="\d{11}"
+                            placeholder="12345678901">
+                    </div>
+                    <div class="form-group">
+                        <label for="login_password">Şifre</label>
+                        <input type="password" id="login_password" required placeholder="Şifreniz">
+                    </div>
+
+                    <button type="submit" class="btn-primary" id="loginSubmitBtn">
+                        <span class="btn-text" id="login-btn-text">Giriş Yap</span>
+                        <div class="spinner hidden" id="login-spinner"></div>
+                    </button>
+
+                    <div id="login-error-msg" class="error-msg hidden"></div>
+
+                    <div class="auth-links">
+                        <p><a href="#" id="showForgotBtn">Şifremi Unuttum</a></p>
+                        <p>Hesabın yok mu? <a href="#" id="showRegisterBtn">Kayıt Ol</a></p>
+                    </div>
+                </form>
+            </section>
+
+            <!-- Forgot Password View -->
+            <section id="forgot-view" class="glass-panel hidden">
+                <h2>Şifremi Unuttum</h2>
+                <p class="subtitle" id="resetSubtitle">Telefon numaranızı girerek şifrenizi sıfırlayabilirsiniz.</p>
+
+                <form id="forgotPasswordFormStep1">
+                    <div class="form-group">
+                        <label for="reset_phone">Telefon Numarası</label>
+                        <input type="tel" id="reset_phone" required placeholder="05XX XXX XX XX">
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="sendOtpBtn">Kodu Gönder</button>
+                    <div class="auth-links">
+                        <a href="#" id="backToLoginFromReset1">Giriş Yap Ekranına Dön</a>
+                    </div>
+                </form>
+
+                <form id="forgotPasswordFormStep2" class="hidden">
+                    <div class="form-group row">
+                        <div class="col">
+                            <label for="reset_otp">Doğrulama Kodu</label>
+                            <input type="text" id="reset_otp" required placeholder="6 Haneli Kod">
+                        </div>
+                        <div class="col">
+                            <label for="new_password">Yeni Şifre</label>
+                            <input type="password" id="new_password" required placeholder="Yeni güvenli şifre">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="verifyOtpBtn">Şifreyi Güncelle</button>
+                    <div class="auth-links">
+                        <a href="#" id="backToLoginFromReset2">Vazgeç ve Giriş'e Dön</a>
+                    </div>
+                </form>
+            </section>
+        </main>
+    </div>
+
+    <!-- Main App Container (Hidden before login) -->
+    <div class="app-container hidden" id="main-app-container">
+        <!-- Top App Bar -->
+        <header class="app-header">
+            <h1 class="glow-text text-sm">Urfa-Link</h1>
+            <div class="app-header-icons">
+                <span class="icon">🔔</span>
+            </div>
+        </header>
+
+        <!-- Main Feed Area -->
+        <main class="app-content-scrollable">
+            <!-- Home/Explore Tab (Matches) -->
+            <section id="tab-home" class="tab-content active">
+                <div class="feed-header">
+                    <h2>Keşfet</h2>
+                    <p>Sana 20km uzaklıkta ve >%75 aynı ilgi alanında olan kişiler.</p>
+                </div>
+                <div id="matches-container" class="feed-list">
+                    <!-- Cards will be injected here via JS -->
+                </div>
+            </section>
+
+            <!-- Messages Tab -->
+            <section id="tab-messages" class="tab-content hidden">
+                <div class="feed-header">
+                    <h2>Mesajlar</h2>
+                    <p>Sohbet ettiğiniz kişiler burada görünecek.</p>
+                </div>
+                <div class="empty-state">
+                    <span class="empty-icon">💬</span>
+                    <p>Henüz kimseyle eşleşmedin veya konuşmadın.<br>Keşfet sekmesinden sosyalleşmeye başla!</p>
+                </div>
+            </section>
+
+            <!-- Map Tab -->
+            <section id="tab-map" class="tab-content hidden">
+                <div class="feed-header">
+                    <h2>Yakındakiler</h2>
+                    <p>Çevrendeki kişileri haritada keşfet.</p>
+                </div>
+                <div id="map"
+                    style="width: 100%; height: 400px; border-radius: 12px; border: 1px solid var(--panel-border); background: var(--card-bg);">
+                </div>
+            </section>
+
+            <!-- Admin Tab -->
+            <section id="tab-admin" class="tab-content hidden">
+                <div class="feed-header">
+                    <h2>Yönetim Paneli</h2>
+                    <p>Sistem genel istatistikleri ve kullanıcı yönetimi.</p>
+                </div>
+                <div class="admin-dashboard">
+                    <div class="admin-stats-grid" id="admin-stats-grid">
+                        <div class="admin-stat-card">
+                            <h3>...</h3>
+                            <p>Kullanıcı</p>
+                        </div>
+                        <div class="admin-stat-card">
+                            <h3>...</h3>
+                            <p>Eşleşme</p>
+                        </div>
+                        <div class="admin-stat-card">
+                            <h3>...</h3>
+                            <p>Mesaj</p>
+                        </div>
+                    </div>
+                    <h3 style="margin-top: 2rem; margin-bottom: 1rem;">Kullanıcı Listesi</h3>
+                    <div class="admin-users-list" id="admin-users-container">
+                        <!-- User rows will be injected here -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Profile Tab -->
+            <section id="tab-profile" class="tab-content hidden">
+                <div class="feed-header">
+                    <h2>Profilim</h2>
+                </div>
+                <div class="profile-card glass-panel">
+                    <div class="avatar-upload-container" id="avatarUploadContainer">
+                        <img src="https://i.pravatar.cc/150?u=default" alt="Avatar" class="profile-avatar"
+                            id="profile-avatar-img">
+                        <div class="avatar-overlay">
+                            <span>� Yükle</span>
+                        </div>
+                        <input type="file" id="avatarUpload" accept="image/png, image/jpeg" hidden>
+                    </div>
+                    <h3 id="profile-name">Kullanıcı Adı</h3>
+                    <p id="profile-bio" class="text-secondary" style="margin-top: 10px;">Biyografi yükleniyor...</p>
+
+                    <button id="editProfileBtn" class="btn-primary" style="margin-top: 25px;">Profili Düzenle</button>
+                    <!-- Move locateMeBtn here from the map tab, since it corresponds to user's profile/settings -->
+                    <button id="locateMeBtn" class="btn-secondary" style="margin-top: 15px;">Konumumu Güncelle</button>
+
+                    <button class="btn-secondary" id="logoutBtn"
+                        style="margin-top: 15px; border-color: var(--error-color); color: var(--error-color);">Çıkış
+                        Yap</button>
+                </div>
+            </section>
+        </main>
+
+        <!-- Bottom Navigation Bar -->
+        <nav class="bottom-nav">
+            <button class="nav-item active" data-tab="tab-home">
+                <span class="nav-icon">🏠</span>
+                <span class="nav-label">Keşfet</span>
+            </button>
+            <button class="nav-item" data-tab="tab-map">
+                <span class="nav-icon">🌍</span>
+                <span class="nav-label">Harita</span>
+            </button>
+            <button class="nav-item" data-tab="tab-messages">
+                <span class="nav-icon">💬</span>
+                <span class="nav-label">Mesajlar</span>
+            </button>
+            <button class="nav-item" data-tab="tab-profile">
+                <span class="nav-icon">👤</span>
+                <span class="nav-label">Profil</span>
+            </button>
+            <button class="nav-item hidden" data-tab="tab-admin" id="nav-admin-btn">
+                <span class="nav-icon">⚙️</span>
+                <span class="nav-label">Admin</span>
+            </button>
+        </nav>
+
+        <!-- Chat Overlay Screen (Hidden initially) -->
+        <div id="chat-overlay" class="chat-overlay hidden">
+            <!-- Chat Header -->
+            <header class="chat-header">
+                <button id="closeChatBtn" class="icon-btn">⬅</button>
+                <div class="chat-user-info">
+                    <h3 id="chat-peer-name">Kullanıcı</h3>
+                    <p class="status-indicator">● Çevrimiçi</p>
+                </div>
+                <div class="chat-actions">
+                    <button class="icon-btn">⋮</button>
+                </div>
+            </header>
+
+            <!-- Chat Messages Area -->
+            <main id="chat-messages-container" class="chat-messages">
+                <!-- Message bubbles will be inserted here -->
+            </main>
+
+            <!-- Chat Input Area -->
+            <footer class="chat-input-area">
+                <input type="file" id="chatImageUpload" accept="image/*" hidden>
+                <button id="attachImageBtn" class="icon-btn" style="margin-right: 0.5rem;"
+                    title="Fotoğraf Gönder">📎</button>
+                <input type="text" id="chat-input" placeholder="Mesaj yaz..." autocomplete="off">
+                <button id="sendMessageBtn" class="send-btn">➤</button>
+            </footer>
+        </div>
+
+        <!-- Edit Profile Overlay Screen (Hidden initially) -->
+        <div id="edit-profile-overlay" class="chat-overlay hidden" style="z-index: 105;">
+            <!-- Header -->
+            <header class="chat-header">
+                <button id="closeEditProfileBtn" class="icon-btn">⬅</button>
+                <div class="chat-user-info">
+                    <h3>Profili Düzenle</h3>
+                </div>
+                <div class="chat-actions"></div>
+            </header>
+
+            <!-- Scrollable Content -->
+            <main class="app-content-scrollable" style="padding: 20px;">
+                <form id="editProfileForm" class="glass-panel" style="padding: 20px;">
+                    <div class="form-group">
+                        <label for="edit_name">Ad Soyad</label>
+                        <input type="text" id="edit_name" required>
+                    </div>
+
+                    <div class="form-group row">
+                        <div class="col">
+                            <label for="edit_district">İlçe</label>
+                            <select id="edit_district">
+                                <option value="Merkez">Merkez</option>
+                                <option value="Hilvan">Hilvan</option>
+                                <option value="Siverek">Siverek</option>
+                                <option value="Viranşehir">Viranşehir</option>
+                            </select>
+                        </div>
+                        <div class="col">
+                            <label for="edit_education">Eğitim</label>
+                            <select id="edit_education">
+                                <option value="Fırat Üniversitesi">Fırat Üniversitesi</option>
+                                <option value="Harran Üniversitesi">Harran Üniversitesi</option>
+                                <option value="Lise">Lise</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="edit_bio">Biyografi</label>
+                        <textarea id="edit_bio" rows="4" required></textarea>
+                        <small class="text-secondary" style="display: block; margin-top: 8px; font-size: 0.8rem;">
+                            Biyografinizi değiştirdiğinizde yapay zeka ilgi alanlarınızı tekrar analiz edecektir.
+                        </small>
+                    </div>
+
+                    <button type="submit" class="btn-primary" id="saveProfileBtn">
+                        <span id="save-profile-text">Kaydet</span>
+                        <div class="spinner hidden" id="save-profile-spinner"></div>
+                    </button>
+                </form>
+            </main>
+        </div>
+
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+
+</html>

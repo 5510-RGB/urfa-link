@@ -68,6 +68,41 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
     except WebSocketDisconnect:
         manager.disconnect(client_id)
 
+from pydantic import BaseModel
+
+class SendMessageRequest(BaseModel):
+    content: str
+
+@router.post("/{sender_id}/{receiver_id}/text")
+async def send_text_message(
+    sender_id: str,
+    receiver_id: str,
+    payload: SendMessageRequest,
+    db: Session = Depends(get_db)
+):
+    # Verify users exist
+    sender = db.query(models_db.UserDB).filter(models_db.UserDB.id == sender_id).first()
+    receiver = db.query(models_db.UserDB).filter(models_db.UserDB.id == receiver_id).first()
+    if not sender or not receiver:
+        raise HTTPException(status_code=404, detail="Sender or receiver not found")
+
+    if not payload.content:
+        raise HTTPException(status_code=400, detail="Message content cannot be empty")
+
+    # 1. Save to Database
+    new_msg = models_db.MessageDB(
+        sender_id=sender_id,
+        receiver_id=receiver_id,
+        content=payload.content
+    )
+    db.add(new_msg)
+    db.commit()
+
+    # 2. Try to send in real-time
+    await manager.send_personal_message(payload.content, sender_id, receiver_id)
+
+    return {"status": "ok", "content": payload.content}
+
 @router.post("/{sender_id}/{receiver_id}/upload-image")
 async def upload_chat_image(
     sender_id: str, 

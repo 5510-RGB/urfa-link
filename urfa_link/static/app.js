@@ -944,19 +944,24 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Send Message Event
-    function sendMessage() {
+    async function sendMessage() {
         const text = chatInput.value.trim();
-        if (!text || !ws || !currentChatPeerId) return;
+        if (!text || !currentChatPeerId) return;
 
         // Sent visually immediately
         renderChatMessage(text, 'sent');
         chatInput.value = '';
 
-        // Send via WebSocket to server
-        ws.send(JSON.stringify({
-            receiver_id: currentChatPeerId,
-            content: text
-        }));
+        // Send via HTTP POST
+        try {
+            await fetch(`/messages/${currentUserId}/${currentChatPeerId}/text`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content: text })
+            });
+        } catch (err) {
+            console.error("Message send failed:", err);
+        }
     }
 
     sendMessageBtn.addEventListener('click', sendMessage);

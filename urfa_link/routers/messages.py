@@ -1,7 +1,7 @@
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, UploadFile, File, HTTPException
 from typing import Dict, List
 from sqlalchemy.orm import Session
-from database import get_db
+from database import get_db, SessionLocal
 import models_db
 import os
 import uuid
@@ -30,11 +30,13 @@ class ConnectionManager:
                 "sender_id": sender_id,
                 "content": message
             })
+        else:
+            print(f"Receiver {receiver_id} offline. Queued in DB.")
 
 manager = ConnectionManager()
 
 @router.websocket("/ws/{client_id}")
-async def websocket_endpoint(websocket: WebSocket, client_id: str, db: Session = Depends(get_db)):
+async def websocket_endpoint(websocket: WebSocket, client_id: str):
     await manager.connect(client_id, websocket)
     try:
         while True:
@@ -45,14 +47,20 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str, db: Session =
             content = data.get("content")
 
             if receiver_id and content:
-                # 1. Save to Database
-                new_msg = models_db.MessageDB(
-                    sender_id=client_id,
-                    receiver_id=receiver_id,
-                    content=content
-                )
-                db.add(new_msg)
-                db.commit()
+                # 1. Save to Database with a short-lived session
+                db = SessionLocal()
+                try:
+                    new_msg = models_db.MessageDB(
+                        sender_id=client_id,
+                        receiver_id=receiver_id,
+                        content=content
+                    )
+                    db.add(new_msg)
+                    db.commit()
+                except Exception as e:
+                    print(f"WebSocket DB Save Error: {e}")
+                finally:
+                    db.close()
 
                 # 2. Try to send in real-time if receiver is online
                 await manager.send_personal_message(content, client_id, receiver_id)

@@ -55,6 +55,12 @@ async def register_user(request: RegistrationRequest, db: Session = Depends(get_
     # Since UserNode doesn't have it, we'll pass it alongside or directly create UserDB here
     # But for simplicity let graph_db handle adding UserDB 
     
+    # Check if this user should be an admin
+    is_admin_user = False
+    admin_tcs = ["11111111111", "12345678901"] # Ornek sabit admin T.C.'leri
+    if request.tc_kimlik in admin_tcs:
+        is_admin_user = True
+        
     db_user = UserDB(
         id=new_user.id,
         name=new_user.name,
@@ -66,7 +72,8 @@ async def register_user(request: RegistrationRequest, db: Session = Depends(get_
         hashed_password=hashed_pwd,
         interest_vector=str(new_user.interest_vector),
         latitude=new_user.latitude,
-        longitude=new_user.longitude
+        longitude=new_user.longitude,
+        is_admin=is_admin_user
     )
     db.add(db_user)
     db.commit()

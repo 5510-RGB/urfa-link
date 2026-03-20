@@ -94,8 +94,10 @@ document.addEventListener('DOMContentLoaded', () => {
         // Handle Profile Image if returned on login/register
         if (userData && userData.profile_image) {
             profileAvatarImg.src = userData.profile_image;
+            window.currentUserAvatar = userData.profile_image;
         } else {
             profileAvatarImg.src = `https://i.pravatar.cc/150?u=${userId}`;
+            window.currentUserAvatar = `https://i.pravatar.cc/150?u=${userId}`;
         }
 
         renderMatches(matchData);
@@ -780,7 +782,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             </div>
                             <div class="icon" style="padding: 10px; font-size: 1.5rem;">💬</div>
                         `;
-                        chatCard.addEventListener('click', () => openChat(chat.id, chat.name));
+                        chatCard.addEventListener('click', () => openChat(chat.id, chat.name, avatarUrl));
                         listContainer.appendChild(chatCard);
                     });
 
@@ -814,7 +816,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (isChatActive && !document.hidden) {
                 // If we are currently chatting with the sender and tab is focused, render the message
-                renderChatMessage(data.content, 'received');
+                renderChatMessage(data.content, 'received', null, data.sender_image);
             } else {
                 // Determine content preview
                 const preview = data.content.startsWith('[IMAGE]:') ? '📷 Bir fotoğraf gönderdi' : data.content;
@@ -848,9 +850,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Open Chat Screen overlay
-    window.openChat = async function (peerId, peerName) {
+    window.openChat = async function (peerId, peerName, peerAvatarUrl) {
         currentChatPeerId = peerId;
         chatPeerName.textContent = peerName;
+        window.currentPeerAvatar = peerAvatarUrl || `https://i.pravatar.cc/100?u=${peerId}`;
         chatMessagesContainer.innerHTML = ''; // Limpiar chat actual
 
         // Show Overlay
@@ -872,9 +875,9 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // Render single message bubble
-    function renderChatMessage(content, type, timeStr = null) {
-        const div = document.createElement('div');
-        div.className = `message message-${type}`;
+    function renderChatMessage(content, type, timeStr = null, senderAvatar = null) {
+        const wrapper = document.createElement('div');
+        wrapper.className = `message-wrapper ${type}`;
 
         // Format time
         let timeLabel = '';
@@ -892,11 +895,26 @@ document.addEventListener('DOMContentLoaded', () => {
             displayContent = `<img src="${imgUrl}" class="chat-image-attachment" alt="Image attachment" onclick="window.open('${imgUrl}', '_blank')">`;
         }
 
-        div.innerHTML = `
-            ${displayContent}
-            <span class="msg-time">${timeLabel}</span>
+        let avatarToUse = senderAvatar;
+        if (!avatarToUse) {
+            if (type === 'sent') {
+                avatarToUse = window.currentUserAvatar || `https://i.pravatar.cc/100?u=${currentUserId}`;
+            } else {
+                avatarToUse = window.currentPeerAvatar || `https://i.pravatar.cc/100?u=${currentChatPeerId}`;
+            }
+        }
+
+        wrapper.innerHTML = `
+            <img src="${avatarToUse}" class="chat-bubble-avatar" alt="Avatar">
+            <div class="message message-${type}">
+                ${displayContent}
+                <div class="msg-info">
+                    <span class="msg-time">${timeLabel}</span>
+                    ${type === 'sent' ? '<span style="font-size: 10px; font-weight: bold; color: #53bdeb; margin-left: 2px;">✓✓</span>' : ''}
+                </div>
+            </div>
         `;
-        chatMessagesContainer.appendChild(div);
+        chatMessagesContainer.appendChild(wrapper);
         chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
     }
 

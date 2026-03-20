@@ -22,12 +22,14 @@ class ConnectionManager:
         if user_id in self.active_connections:
             del self.active_connections[user_id]
 
-    async def send_personal_message(self, message: str, sender_id: str, receiver_id: str):
+    async def send_personal_message(self, message: str, sender_id: str, receiver_id: str, sender_name: str = "Bilinmeyen", sender_image: str | None = None):
         # We send a JSON string to the receiver if they are online
         if receiver_id in self.active_connections:
             websocket = self.active_connections[receiver_id]
             await websocket.send_json({
                 "sender_id": sender_id,
+                "sender_name": sender_name,
+                "sender_image": sender_image,
                 "content": message
             })
         else:
@@ -49,7 +51,14 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
             if receiver_id and content:
                 # 1. Save to Database with a short-lived session
                 db = SessionLocal()
+                sender_name = "Bilinmeyen"
+                sender_image = None
                 try:
+                    sender = db.query(models_db.UserDB).filter(models_db.UserDB.id == client_id).first()
+                    if sender:
+                        sender_name = sender.name
+                        sender_image = sender.profile_image
+                        
                     new_msg = models_db.MessageDB(
                         sender_id=client_id,
                         receiver_id=receiver_id,
@@ -63,7 +72,7 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
                     db.close()
 
                 # 2. Try to send in real-time if receiver is online
-                await manager.send_personal_message(content, client_id, receiver_id)
+                await manager.send_personal_message(content, client_id, receiver_id, sender_name, sender_image)
 
     except WebSocketDisconnect:
         manager.disconnect(client_id)

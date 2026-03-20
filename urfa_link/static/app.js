@@ -818,56 +818,66 @@ document.addEventListener('DOMContentLoaded', () => {
     function initWebSocket() {
         if (!currentUserId) return;
 
-        // Use relative WSS/WS path based on current domain protocol
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
         const wsUrl = `${protocol}//${window.location.host}/messages/ws/${currentUserId}`;
 
-        ws = new WebSocket(wsUrl);
+        function connect() {
+            ws = new WebSocket(wsUrl);
 
-        ws.onopen = () => {
-            console.log("WebSocket Bağlantısı Kuruldu!");
-        };
+            ws.onopen = () => {
+                console.log("WebSocket Bağlantısı Kuruldu!");
+                if (window.wsPingInterval) clearInterval(window.wsPingInterval);
+                window.wsPingInterval = setInterval(() => {
+                    if (ws && ws.readyState === WebSocket.OPEN) {
+                        ws.send(JSON.stringify({ type: "ping" }));
+                    }
+                }, 30000);
+            };
 
-        ws.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-            console.log("Yeni mesaj geldi:", data);
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                if (data.type === "pong") return;
 
-            // Determine if the chat overlay is active and we are chatting with this specific sender
-            const isChatActive = !chatOverlay.classList.contains('hidden') && currentChatPeerId === data.sender_id;
+                console.log("Yeni mesaj geldi:", data);
 
-            if (isChatActive && !document.hidden) {
-                // If we are currently chatting with the sender and tab is focused, render the message
-                renderChatMessage(data.content, 'received', null, data.sender_image);
-            } else {
-                // Determine content preview
-                const preview = data.content.startsWith('[IMAGE]:') ? '📷 Bir fotoğraf gönderdi' : data.content;
+                const isChatActive = !chatOverlay.classList.contains('hidden') && currentChatPeerId === data.sender_id;
 
-                // Fire OS Push Notification if permitted
-                if ("Notification" in window && Notification.permission === "granted") {
-                    const notify = new Notification("Yeni Mesaj: " + data.sender_id, {
-                        body: preview,
-                        icon: '/static/icons/chat-icon.png' // Optional dummy icon path
-                    });
+                if (isChatActive && !document.hidden) {
+                    renderChatMessage(data.content, 'received', null, data.sender_image);
+                } else {
+                    const preview = data.content.startsWith('[IMAGE]:') ? '📷 Bir fotoğraf gönderdi' : data.content;
 
-                    notify.onclick = function () {
-                        window.focus(); // Focus the browser tab
-                        // Optionally open the chat overlay right away
-                        // window.openChat(data.sender_id, data.sender_id); 
-                        this.close();
-                    };
-                } else if (!document.hidden) {
-                    // Fallback to alert if permissions aren't granted but user is in app
-                    alert(`${data.sender_id} size mesaj gönderdi: ${preview}`);
+                    if ("Notification" in window && Notification.permission === "granted") {
+                        const notify = new Notification("Yeni Mesaj: " + data.sender_id, {
+                            body: preview,
+                            icon: '/static/icons/chat-icon.png'
+                        });
+
+                        notify.onclick = function () {
+                            window.focus();
+                            this.close();
+                        };
+                    } else if (!document.hidden) {
+                        alert(`${data.sender_id} size mesaj gönderdi: ${preview}`);
+                    }
+
+                    loadActiveChats();
                 }
+            };
 
-                // Re-load the chats tab to ensure they appear in the active list
-                loadActiveChats();
-            }
-        };
+            ws.onclose = () => {
+                console.log("WebSocket kapandı. 3 saniye içinde yeniden bağlanılıyor...");
+                if (window.wsPingInterval) clearInterval(window.wsPingInterval);
+                setTimeout(connect, 3000);
+            };
 
-        ws.onclose = () => {
-            console.log("WebSocket kapandı. (TODO: Reconnect logic)");
-        };
+            ws.onerror = (err) => {
+                console.error("WebSocket Hatası:", err);
+                ws.close();
+            };
+        }
+
+        connect();
     }
 
     // Open Chat Screen overlay
@@ -903,7 +913,12 @@ document.addEventListener('DOMContentLoaded', () => {
         // Format time
         let timeLabel = '';
         if (timeStr) {
-            const dateObj = new Date(timeStr);
+            // Fix UTC timezone issue from backend if string lacks 'Z'
+            let parseStr = timeStr;
+            if (!parseStr.endsWith('Z') && !parseStr.includes('+')) {
+                parseStr += 'Z';
+            }
+            const dateObj = new Date(parseStr);
             timeLabel = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         } else {
             const now = new Date();

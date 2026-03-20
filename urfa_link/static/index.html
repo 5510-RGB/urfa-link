@@ -265,7 +265,26 @@
                     <h3 id="profile-name">Kullanıcı Adı</h3>
                     <p id="profile-bio" class="text-secondary" style="margin-top: 10px;">Biyografi yükleniyor...</p>
 
-                    <button id="editProfileBtn" class="btn-primary" style="margin-top: 25px;">Profili Düzenle</button>
+                    <!-- Stats Section (Instagram Style) -->
+                    <div class="profile-stats"
+                        style="display: flex; justify-content: space-around; margin: 15px 0; border-top: 1px solid rgba(255,255,255,0.1); border-bottom: 1px solid rgba(255,255,255,0.1); padding: 10px 0;">
+                        <div style="text-align: center; cursor: pointer;">
+                            <h4 id="stat-followers" style="margin: 0; font-size: 1.2rem; color: var(--accent-glow);">0
+                            </h4>
+                            <p style="margin: 0; font-size: 0.8rem; color: var(--text-secondary);">Takipçi</p>
+                        </div>
+                        <div style="text-align: center; cursor: pointer;">
+                            <h4 id="stat-following" style="margin: 0; font-size: 1.2rem; color: var(--accent-glow);">0
+                            </h4>
+                            <p style="margin: 0; font-size: 0.8rem; color: var(--text-secondary);">Takip</p>
+                        </div>
+                        <div style="text-align: center; cursor: pointer;">
+                            <h4 id="stat-mutual" style="margin: 0; font-size: 1.2rem; color: var(--accent-glow);">0</h4>
+                            <p style="margin: 0; font-size: 0.8rem; color: var(--text-secondary);">Arkadaşlar</p>
+                        </div>
+                    </div>
+
+                    <button id="editProfileBtn" class="btn-primary" style="margin-top: 10px;">Profili Düzenle</button>
                     <!-- Move locateMeBtn here from the map tab, since it corresponds to user's profile/settings -->
                     <button id="locateMeBtn" class="btn-secondary" style="margin-top: 15px;">Konumumu Güncelle</button>
 

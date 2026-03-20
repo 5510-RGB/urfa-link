@@ -324,6 +324,14 @@ textarea {
     justify-content: flex-end;
 }
 
+/* Chat Tab Match Card Override */
+.chat-list-container .match-card {
+    height: 80px !important;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+}
+
 .match-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 15px 30px rgba(0, 0, 0, 0.6);

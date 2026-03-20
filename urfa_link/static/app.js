@@ -103,6 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
         renderMatches(matchData);
         loadActiveChats(); // Load Chats for the Message tab
         initWebSocket();
+        loadUserStats(); // Fetch follower stats
         initMap(matchData);
 
         // Phase 14: Request Push Notification Permissions
@@ -122,6 +123,26 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 adminBtn.classList.add('hidden');
             }
+        }
+    }
+
+    // Load Profile Stats (Followers, Following, Mutual)
+    async function loadUserStats() {
+        if (!currentUserId) return;
+        try {
+            const req = await fetch(`/users/${currentUserId}/stats`);
+            if (req.ok) {
+                const stats = await req.json();
+                const followersEl = document.getElementById('stat-followers');
+                const followingEl = document.getElementById('stat-following');
+                const mutualEl = document.getElementById('stat-mutual');
+
+                if (followersEl) followersEl.textContent = stats.followers_count;
+                if (followingEl) followingEl.textContent = stats.following_count;
+                if (mutualEl) mutualEl.textContent = stats.mutual_count;
+            }
+        } catch (err) {
+            console.error("İstatistikler yüklenemedi:", err);
         }
     }
 
@@ -991,5 +1012,14 @@ document.addEventListener('DOMContentLoaded', () => {
         chatOverlay.classList.add('hidden');
         currentChatPeerId = null;
     });
+
+    // Notification Bell Click Event
+    const notificationBtn = document.querySelector('.app-header-icons .icon');
+    if (notificationBtn) {
+        notificationBtn.style.cursor = 'pointer';
+        notificationBtn.addEventListener('click', () => {
+            alert('Henüz yeni bildiriminiz yok. (Yakında)');
+        });
+    }
 
 });

@@ -264,6 +264,35 @@ async def process_swipe(user_id: str, request: SwipeRequest, db: Session = Depen
             
     return {"message": "Aksiyon kaydedildi", "is_mutual": is_mutual}
 
+@router.get("/{user_id}/stats")
+async def get_user_stats(user_id: str, db: Session = Depends(get_db)):
+    user = db.query(UserDB).filter(UserDB.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+        
+    # Following: users I liked
+    following = db.query(MatchActionDB.target_id).filter(
+        MatchActionDB.actor_id == user_id,
+        MatchActionDB.action == "like"
+    ).all()
+    following_ids = {record[0] for record in following}
+    
+    # Followers: users who liked me
+    followers = db.query(MatchActionDB.actor_id).filter(
+        MatchActionDB.target_id == user_id,
+        MatchActionDB.action == "like"
+    ).all()
+    follower_ids = {record[0] for record in followers}
+    
+    # Mutual: intersection
+    mutual_ids = following_ids.intersection(follower_ids)
+    
+    return {
+        "following_count": len(following_ids),
+        "followers_count": len(follower_ids),
+        "mutual_count": len(mutual_ids)
+    }
+
 @router.get("/{user_id}/mutual-matches")
 async def get_mutual_matches(user_id: str, db: Session = Depends(get_db)):
     user = db.query(UserDB).filter(UserDB.id == user_id).first()

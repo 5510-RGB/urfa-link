@@ -372,6 +372,47 @@ textarea {
     gap: 0.4rem;
 }
 
+.messages-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+/* ========================================= */
+/* Mobile Performance Optimizations          */
+/* ========================================= */
+
+@media (max-width: 768px) {
+    .bg-shape {
+        filter: blur(30px) !important;
+        animation: none !important; 
+        opacity: 0.5;
+    }
+    
+    .glass-panel {
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        background: rgba(22, 27, 34, 0.95) !important;
+        box-shadow: none !important;
+    }
+    
+    .bottom-nav, .app-header, .chat-header, .chat-input-area {
+        backdrop-filter: none !important;
+        background: rgba(13, 17, 23, 1) !important;
+    }
+
+    .app-container {
+        height: 100vh;
+        width: 100vw;
+        border-radius: 0;
+        border: none;
+    }
+    
+    body {
+        background-color: #0d1117;
+    }
+}
+
 .match-content h3 {
     margin: 0;
     font-size: 1.2rem;

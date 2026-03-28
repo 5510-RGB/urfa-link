@@ -22,53 +22,48 @@ router = APIRouter(prefix="/users", tags=["Users"])
 
 @router.post("/register", response_model=UserNode, status_code=status.HTTP_201_CREATED)
 async def register_user(request: RegistrationRequest, db: Session = Depends(get_db)):
-    # 1. Validate T.C. Kimlik (AG-Shield element)
-    if not SecurityProtocol.validate_tc_identity(request.tc_kimlik, request.name):
-        raise HTTPException(status_code=400, detail="Invalid T.C. Kimlik information.")
-        
-    # Check if user with same TC exists
-    existing = db.query(UserDB).filter(UserDB.tc_kimlik == request.tc_kimlik).first()
+    # Check if user with same phone exists
+    existing = db.query(UserDB).filter(UserDB.phone == request.phone).first()
     if existing:
-        raise HTTPException(status_code=400, detail="User with this T.C. Kimlik already exists.")
+        raise HTTPException(status_code=400, detail="User with this phone number already exists.")
         
-    # 2. Analyze bio with Gemini 1.5 Pro to get Interest-Vector
-    interest_vector = AIBioAnalyzer.analyze_bio(request.bio)
+    # Default values for fields removed from registration form
+    default_bio = ""
+    default_district = ""
+    default_education = ""
+    default_lat = 37.5833
+    default_lon = 38.9500
+    default_interest_vector = []
     
-    # 3. Hash the password
+    # Hash the password
     hashed_pwd = pwd_context.hash(request.password)
     
-    # 4. Create UserNode
+    # Create UserNode
     user_id = str(uuid.uuid4())
     new_user = UserNode(
         id=user_id,
         name=request.name,
-        tc_kimlik=request.tc_kimlik,
         phone=request.phone,
-        district=request.district,
-        education=request.education,
-        interest_vector=interest_vector,
-        latitude=request.latitude,
-        longitude=request.longitude
+        district=default_district,
+        education=default_education,
+        interest_vector=default_interest_vector,
+        latitude=default_lat,
+        longitude=default_lon
     )
-    
-    # We need to save the hashed password to the database as well
-    # Since UserNode doesn't have it, we'll pass it alongside or directly create UserDB here
-    # But for simplicity let graph_db handle adding UserDB 
     
     # Check if this user should be an admin
     is_admin_user = False
-    admin_tcs = ["11111111111", "12345678901"] # Ornek sabit admin T.C.'leri
-    if request.tc_kimlik in admin_tcs:
+    admin_phones = ["05555555555"]
+    if request.phone in admin_phones:
         is_admin_user = True
         
     db_user = UserDB(
         id=new_user.id,
         name=new_user.name,
-        tc_kimlik=new_user.tc_kimlik,
         phone=new_user.phone,
         district=new_user.district,
         education=new_user.education,
-        bio=request.bio,
+        bio=default_bio,
         hashed_password=hashed_pwd,
         interest_vector=str(new_user.interest_vector),
         latitude=new_user.latitude,
@@ -83,12 +78,12 @@ async def register_user(request: RegistrationRequest, db: Session = Depends(get_
 
 @router.post("/login")
 async def login_user(request: LoginRequest, db: Session = Depends(get_db)):
-    user = db.query(UserDB).filter(UserDB.tc_kimlik == request.tc_kimlik).first()
+    user = db.query(UserDB).filter(UserDB.phone == request.phone).first()
     if not user:
-        raise HTTPException(status_code=400, detail="Geçersiz T.C. Kimlik No veya Şifre")
+        raise HTTPException(status_code=400, detail="Geçersiz Telefon Numarası veya Şifre")
         
     if not pwd_context.verify(request.password, user.hashed_password):
-        raise HTTPException(status_code=400, detail="Geçersiz T.C. Kimlik No veya Şifre")
+        raise HTTPException(status_code=400, detail="Geçersiz Telefon Numarası veya Şifre")
         
     return {
         "message": "Giriş Başarılı", 

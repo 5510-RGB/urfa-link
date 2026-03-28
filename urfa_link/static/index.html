@@ -40,19 +40,7 @@
                     <div class="form-group row">
                         <div class="col">
                             <label for="name">Ad Soyad</label>
-                            <input type="text" id="name" required placeholder="Eren Yeager">
-                        </div>
-                        <div class="col">
-                            <label for="tc_kimlik">T.C. Kimlik</label>
-                            <input type="text" id="tc_kimlik" required maxlength="11" pattern="\d{11}"
-                                placeholder="12345678901">
-                        </div>
-                    </div>
-
-                    <div class="form-group row">
-                        <div class="col">
-                            <label for="password">Şifre</label>
-                            <input type="password" id="password" required placeholder="Güvenli bir şifre belirleyin">
+                            <input type="text" id="name" required placeholder="Adınız Soyadınız">
                         </div>
                         <div class="col">
                             <label for="phone">Telefon Numarası</label>
@@ -60,41 +48,9 @@
                         </div>
                     </div>
 
-                    <div class="form-group row">
-                        <div class="col">
-                            <label for="district">İlçe</label>
-                            <select id="district">
-                                <option value="Merkez">Merkez</option>
-                                <option value="Hilvan" selected>Hilvan</option>
-                                <option value="Siverek">Siverek</option>
-                                <option value="Viranşehir">Viranşehir</option>
-                            </select>
-                        </div>
-                        <div class="col">
-                            <label for="education">Eğitim</label>
-                            <select id="education">
-                                <option value="Fırat Üniversitesi">Fırat Üniversitesi</option>
-                                <option value="Harran Üniversitesi">Harran Üniversitesi</option>
-                                <option value="Lise" selected>Lise</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="form-group row">
-                        <div class="col">
-                            <label for="latitude">Enlem (Lat)</label>
-                            <input type="number" step="0.0001" id="latitude" required value="37.5833">
-                        </div>
-                        <div class="col">
-                            <label for="longitude">Boylam (Lng)</label>
-                            <input type="number" step="0.0001" id="longitude" required value="38.9500">
-                        </div>
-                    </div>
-
                     <div class="form-group">
-                        <label for="bio">Biyografi (Kendinden Bahset)</label>
-                        <textarea id="bio" rows="3" required
-                            placeholder="Yazılım geliştirmeyi, bilim kurgu filmlerini ve doğa yürüyüşlerini severim..."></textarea>
+                        <label for="password">Şifre</label>
+                        <input type="password" id="password" required placeholder="Güvenli bir şifre belirleyin">
                     </div>
 
                     <button type="submit" class="btn-primary" id="submitBtn">
@@ -115,9 +71,8 @@
                 <h2>Giriş Yap</h2>
                 <form id="loginForm">
                     <div class="form-group">
-                        <label for="login_tc">T.C. Kimlik</label>
-                        <input type="text" id="login_tc" required maxlength="11" pattern="\d{11}"
-                            placeholder="12345678901">
+                        <label for="login_phone">Telefon Numarası</label>
+                        <input type="tel" id="login_phone" required placeholder="05XX XXX XX XX">
                     </div>
                     <div class="form-group">
                         <label for="login_password">Şifre</label>

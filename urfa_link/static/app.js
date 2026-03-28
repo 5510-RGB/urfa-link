@@ -326,7 +326,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             <div class="admin-user-row">
                                 <div class="admin-user-info">
                                     <h4>${u.name} ${u.is_admin ? '<span style="color:var(--primary-color)">(Admin)</span>' : ''}</h4>
-                                    <p>ID: ${u.id.substring(0, 8)}... | TC: ${u.tc_kimlik}</p>
+                                    <p>ID: ${u.id.substring(0, 8)}... | Tel: ${u.phone}</p>
                                 </div>
                                 ${!u.is_admin ? `<button class="btn-danger" onclick="window.deleteUser('${u.id}')">Sil</button>` : ''}
                             </div>
@@ -559,14 +559,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const payload = {
             name: document.getElementById('name').value,
-            tc_kimlik: document.getElementById('tc_kimlik').value,
             phone: document.getElementById('phone').value,
-            password: document.getElementById('password').value,
-            district: document.getElementById('district').value,
-            education: document.getElementById('education').value,
-            bio: document.getElementById('bio').value,
-            latitude: parseFloat(document.getElementById('latitude').value),
-            longitude: parseFloat(document.getElementById('longitude').value)
+            password: document.getElementById('password').value
         };
 
         try {
@@ -617,7 +611,7 @@ document.addEventListener('DOMContentLoaded', () => {
         loginSubmitBtn.disabled = true;
 
         const payload = {
-            tc_kimlik: document.getElementById('login_tc').value,
+            phone: document.getElementById('login_phone').value,
             password: document.getElementById('login_password').value
         };
 

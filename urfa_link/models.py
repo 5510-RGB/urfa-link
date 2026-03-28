@@ -3,7 +3,6 @@ from pydantic import BaseModel
 class UserNode(BaseModel):
     id: str
     name: str
-    tc_kimlik: str
     phone: str
     district: str
     education: str
@@ -14,17 +13,11 @@ class UserNode(BaseModel):
 
 class RegistrationRequest(BaseModel):
     name: str
-    tc_kimlik: str
     phone: str
     password: str
-    district: str
-    education: str
-    bio: str
-    latitude: float
-    longitude: float
 
 class LoginRequest(BaseModel):
-    tc_kimlik: str
+    phone: str
     password: str
 
 class PasswordResetRequest(BaseModel):

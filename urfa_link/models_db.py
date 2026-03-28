@@ -7,9 +7,8 @@ class UserDB(Base):
 
     id = Column(String, primary_key=True, index=True)
     name = Column(String, index=True)
-    tc_kimlik = Column(String, unique=True, index=True)
     phone = Column(String, unique=True, index=True)
-    district = Column(String, index=True)
+    district = Column(String, index=True, nullable=True)
     education = Column(String)
     
     bio = Column(String)

@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
+from fastapi.middleware.cors import CORSMiddleware
 from routers import users, messages, admin
 from database import engine, Base
 import models_db
@@ -12,6 +13,14 @@ app = FastAPI(
     title="Urfa-Link API",
     description="High-performance social networking project based on Anti-Gravity Core v2.0",
     version="1.0.0"
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 app.include_router(users.router)

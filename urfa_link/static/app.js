@@ -1,5 +1,18 @@
 document.addEventListener('DOMContentLoaded', () => {
 
+    const isNativeApp = window.origin.includes('localhost') || window.origin.includes('capacitor') || window.location.protocol === 'file:';
+    const API_BASE_URL = isNativeApp ? 'https://urfa-link.onrender.com' : '';
+    const WS_BASE_URL = isNativeApp ? 'wss://urfa-link.onrender.com' : ((window.location.protocol === 'https:' ? 'wss://' : 'ws://') + window.location.host);
+
+    const originalFetch = window.fetch;
+    window.fetch = function() {
+        let args = Array.prototype.slice.call(arguments);
+        if (typeof args[0] === 'string' && args[0].startsWith('/')) {
+            args[0] = API_BASE_URL + args[0];
+        }
+        return originalFetch.apply(this, args);
+    };
+
     let authToken = null; // Basic token simulation
     let currentUserId = null;
     let ws = null; // WebSocket Connection
@@ -838,10 +851,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function initWebSocket() {
         if (!currentUserId) return;
-
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const wsUrl = `${protocol}//${window.location.host}/messages/ws/${currentUserId}`;
-
+        const wsUrl = `${WS_BASE_URL}/messages/ws/${currentUserId}`;
+        
         function connect() {
             ws = new WebSocket(wsUrl);
 

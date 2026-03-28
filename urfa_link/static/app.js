@@ -1,6 +1,14 @@
 document.addEventListener('DOMContentLoaded', () => {
 
-    const isNativeApp = window.origin.includes('localhost') || window.origin.includes('capacitor') || window.location.protocol === 'file:';
+    let isNativeApp = false;
+    if (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) {
+        isNativeApp = true;
+    } else if (window.location.hostname === 'localhost' && (window.location.port === '' || window.location.port === '80')) {
+        isNativeApp = true; // Capacitor Android localhost without port
+    } else if (window.location.protocol === 'file:') {
+        isNativeApp = true;
+    }
+
     const API_BASE_URL = isNativeApp ? 'https://urfa-link.onrender.com' : '';
     const WS_BASE_URL = isNativeApp ? 'wss://urfa-link.onrender.com' : ((window.location.protocol === 'https:' ? 'wss://' : 'ws://') + window.location.host);
 

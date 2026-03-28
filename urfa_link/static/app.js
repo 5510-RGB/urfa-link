@@ -1,10 +1,15 @@
 document.addEventListener('DOMContentLoaded', () => {
 
-    // Eğer urfa-link.onrender.com domeninde değilsek (yani mobiliz), absolute URL kullan
+    // URL Tespiti: 3 ortam desteklenir
+    // 1) Yerel geliştirme (localhost:8000) → göreceli URL
+    // 2) Canlı web (urfa-link.onrender.com) → göreceli URL
+    // 3) Mobil uygulama (Capacitor, localhost:80/443/boş port) → mutlak Render URL
     const PRODUCTION_HOST = 'urfa-link.onrender.com';
-    const isOnProductionWeb = window.location.hostname === PRODUCTION_HOST;
-    const API_BASE_URL = isOnProductionWeb ? '' : 'https://' + PRODUCTION_HOST;
-    const WS_BASE_URL = isOnProductionWeb
+    const isLocalDev = window.location.hostname === 'localhost' && window.location.port !== '' && window.location.port !== '80' && window.location.port !== '443';
+    const isProductionWeb = window.location.hostname === PRODUCTION_HOST;
+    const useRelativeUrl = isLocalDev || isProductionWeb;
+    const API_BASE_URL = useRelativeUrl ? '' : 'https://' + PRODUCTION_HOST;
+    const WS_BASE_URL = useRelativeUrl
         ? ((window.location.protocol === 'https:' ? 'wss://' : 'ws://') + window.location.host)
         : 'wss://' + PRODUCTION_HOST;
 

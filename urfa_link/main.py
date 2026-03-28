@@ -10,21 +10,6 @@ import models_db
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
-    title="Urfa-Link API",
-    description="High-performance social networking project based on Anti-Gravity Core v2.0",
-    version="1.0.0"
-)
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-app.include_router(users.router)
-app.include_router(messages.router)
 app.include_router(admin.router)
 
 # Mount static files

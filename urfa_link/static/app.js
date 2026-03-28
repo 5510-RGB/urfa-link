@@ -696,8 +696,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (!matches || matches.length === 0) {
             matchesContainer.innerHTML = `
-                <div class="no-matches">
-                    Şu anda çevrenizde (20km) size uygun (%75) ortak ilgi alanına sahip biri bulunamadı. Lütfen daha sonra tekrar deneyin.
+                <div class="no-matches" style="text-align:center; padding: 2rem; background: var(--glass-bg); border-radius: 12px; border: 1px solid var(--panel-border);">
+                    <span style="font-size: 3rem;">🏜️</span>
+                    <h3 style="margin-top: 10px; color: var(--text-color);">Eşleşme Bulunamadı</h3>
+                    <p style="color: var(--text-secondary); margin-top: 5px;">Şu anda çevrenizde (20km) size uygun (%75) ortak ilgi alanına sahip biri yok.</p>
+                    <p style="color: var(--primary-color); margin-top: 15px; font-weight: 600; font-size: 0.95rem;">💡 İPUCU: Yapay zeka destekli eşleşme sistemimizin çalışabilmesi için Profil sekmesinden "Biyografi" ve alanını tam olarak doldurmalısın!</p>
                 </div>`;
             return;
         }

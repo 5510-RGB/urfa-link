@@ -31,8 +31,16 @@ app.include_router(admin.router)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 @app.get("/")
-async def root():
+async def get_index():
     return FileResponse("static/index.html")
+
+@app.get("/style.css")
+async def get_style():
+    return FileResponse("static/style.css")
+
+@app.get("/app.js")
+async def get_app_js():
+    return FileResponse("static/app.js")
 
 if __name__ == "__main__":
     import uvicorn

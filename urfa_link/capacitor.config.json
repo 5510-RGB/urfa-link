@@ -1,5 +1,9 @@
 {
   "appId": "com.urfalink.app",
   "appName": "urfalink",
-  "webDir": "static"
+  "webDir": "static",
+  "server": {
+    "url": "https://urfa-link.onrender.com",
+    "cleartext": false
+  }
 }

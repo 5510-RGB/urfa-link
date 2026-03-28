@@ -468,6 +468,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
     logoutBtn.addEventListener('click', logout);
 
+    const deleteAccountBtn = document.getElementById('deleteAccountBtn');
+    if (deleteAccountBtn) {
+        deleteAccountBtn.addEventListener('click', async () => {
+            if (!currentUserId) return;
+            const confirmDelete = confirm("DİKKAT! Hesabını kalıcı olarak silmek istediğine emin misin? Bu işlem KVKK kapsamında geri alınamaz (Bütün eşleşmelerin ve mesajların silinir).");
+            if (confirmDelete) {
+                try {
+                    const req = await fetch(`/users/${currentUserId}`, {
+                        method: 'DELETE'
+                    });
+                    if (req.ok) {
+                        alert("Hesabın ve tüm verilerin sistemlerimizden kalıcı olarak silinmiştir.");
+                        logout();
+                    } else {
+                        const errData = await req.json();
+                        throw new Error(errData.detail || "Silme işlemi başarısız.");
+                    }
+                } catch (e) {
+                    alert("Hesap silinirken bir hata oluştu: " + e.message);
+                }
+            }
+        });
+    }
+
     // Navigation Event Listeners
     showLoginBtn.addEventListener('click', (e) => { e.preventDefault(); switchAuthView(registerView, loginView); });
     showRegisterBtn.addEventListener('click', (e) => { e.preventDefault(); switchAuthView(loginView, registerView); });

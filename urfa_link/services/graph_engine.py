@@ -9,7 +9,7 @@ class GraphEngine:
         db_user = UserDB(
             id=user.id,
             name=user.name,
-            tc_kimlik=user.tc_kimlik,
+            phone=user.phone,
             district=user.district,
             education=user.education,
             interest_vector=user.interest_vector,
@@ -26,6 +26,11 @@ class GraphEngine:
         
     def get_all_users(self, session: Session) -> List[UserDB]:
         return session.query(UserDB).all()
+    
+    def delete_user(self, session: Session, user_id: str):
+        # We don't maintain a separate DB for graph in this simple version,
+        # but if we did, we would delete it here.
+        pass
 
     def calculate_similarity(self, vec1, vec2) -> float:
         import json

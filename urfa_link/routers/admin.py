@@ -33,12 +33,17 @@ async def get_stats(admin_id: str, db: Session = Depends(get_db)):
         "total_messages": total_messages
     }
 
+def mask_phone(phone: str):
+    if not phone or len(phone) < 10:
+        return phone
+    return f"{phone[:4]} *** {phone[-4:]}"
+
 @router.get("/users/{admin_id}")
 async def list_users(admin_id: str, db: Session = Depends(get_db)):
     check_admin(admin_id, db)
     users = db.query(models_db.UserDB).all()
     user_list = [
-        {"id": u.id, "name": u.name, "tc_kimlik": u.tc_kimlik, "is_admin": u.is_admin}
+        {"id": u.id, "name": u.name, "phone": mask_phone(u.phone), "is_admin": u.is_admin}
         for u in users
     ]
     return user_list

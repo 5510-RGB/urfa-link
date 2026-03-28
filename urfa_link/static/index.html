@@ -53,6 +53,13 @@
                         <input type="password" id="password" required placeholder="Güvenli bir şifre belirleyin">
                     </div>
 
+                    <div class="form-group row" style="align-items: center; justify-content: flex-start; margin-top: 10px;">
+                        <input type="checkbox" id="kvkk_consent" required style="width: auto; margin-right: 10px;">
+                        <label for="kvkk_consent" style="font-size: 0.85rem; color: var(--text-secondary); cursor: pointer;">
+                            <a href="#" style="color: var(--primary-color); text-decoration: underline;">Kullanıcı Sözleşmesi</a> ve <a href="#" style="color: var(--primary-color); text-decoration: underline;">KVKK Aydınlatma Metni</a>'ni okudum, onaylıyorum.
+                        </label>
+                    </div>
+
                     <button type="submit" class="btn-primary" id="submitBtn">
                         <span class="btn-text" id="btn-text">Kayıt Ol & Eşleş</span>
                         <div class="spinner hidden" id="spinner"></div>
@@ -244,8 +251,10 @@
                     <button id="locateMeBtn" class="btn-secondary" style="margin-top: 15px;">Konumumu Güncelle</button>
 
                     <button class="btn-secondary" id="logoutBtn"
-                        style="margin-top: 15px; border-color: var(--error-color); color: var(--error-color);">Çıkış
-                        Yap</button>
+                        style="margin-top: 15px; border-color: var(--text-secondary); color: var(--text-secondary);">Çıkış Yap</button>
+
+                    <button class="btn-secondary" id="deleteAccountBtn"
+                        style="margin-top: 15px; border-color: var(--error-color); color: var(--error-color);">Hesabımı Kalıcı Olarak Sil</button>
                 </div>
             </section>
         </main>

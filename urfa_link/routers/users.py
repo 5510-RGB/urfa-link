@@ -322,3 +322,24 @@ async def get_mutual_matches(user_id: str, db: Session = Depends(get_db)):
             })
             
     return mutual_users
+
+@router.delete("/{user_id}", status_code=status.HTTP_200_OK)
+async def delete_user(user_id: str, db: Session = Depends(get_db)):
+    user = db.query(UserDB).filter(UserDB.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+        
+    from models_db import MessageDB
+    
+    # GDPR Right to be Forgotten: Remove all likes, passes, matches, and messages
+    db.query(MatchActionDB).filter((MatchActionDB.actor_id == user_id) | (MatchActionDB.target_id == user_id)).delete(synchronize_session=False)
+    db.query(MessageDB).filter((MessageDB.sender_id == user_id) | (MessageDB.receiver_id == user_id)).delete(synchronize_session=False)
+    
+    # Delete the user profile
+    db.delete(user)
+    db.commit()
+    
+    # If there's an active graph component, remove them there too
+    graph_db.delete_user(db, user_id)
+    
+    return {"message": "Hesabınız başarıyla kalıcı olarak silindi."}

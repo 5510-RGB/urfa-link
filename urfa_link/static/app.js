@@ -1,16 +1,12 @@
 document.addEventListener('DOMContentLoaded', () => {
 
-    let isNativeApp = false;
-    if (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) {
-        isNativeApp = true;
-    } else if (window.location.hostname === 'localhost' && (window.location.port === '' || window.location.port === '80')) {
-        isNativeApp = true; // Capacitor Android localhost without port
-    } else if (window.location.protocol === 'file:') {
-        isNativeApp = true;
-    }
-
-    const API_BASE_URL = isNativeApp ? 'https://urfa-link.onrender.com' : '';
-    const WS_BASE_URL = isNativeApp ? 'wss://urfa-link.onrender.com' : ((window.location.protocol === 'https:' ? 'wss://' : 'ws://') + window.location.host);
+    // Eğer urfa-link.onrender.com domeninde değilsek (yani mobiliz), absolute URL kullan
+    const PRODUCTION_HOST = 'urfa-link.onrender.com';
+    const isOnProductionWeb = window.location.hostname === PRODUCTION_HOST;
+    const API_BASE_URL = isOnProductionWeb ? '' : 'https://' + PRODUCTION_HOST;
+    const WS_BASE_URL = isOnProductionWeb
+        ? ((window.location.protocol === 'https:' ? 'wss://' : 'ws://') + window.location.host)
+        : 'wss://' + PRODUCTION_HOST;
 
     const originalFetch = window.fetch;
     window.fetch = function() {

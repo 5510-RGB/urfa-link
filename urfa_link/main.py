@@ -1,3 +1,4 @@
+# Urfa-Link Backend v1.1 - CORS fixed
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse

@@ -9,4 +9,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Ping Urfa-Link API
-        run: curl -sSf https://urfa-link.onrender.com > /dev/null || echo "Sunucu zaten uyanik."
+        run: curl -sSf https://urfa-link-h6c7.onrender.com > /dev/null || echo "Sunucu zaten uyanik."

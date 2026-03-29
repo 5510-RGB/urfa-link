@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 1) Yerel geliştirme (localhost:8000) → göreceli URL
     // 2) Canlı web (urfa-link.onrender.com) → göreceli URL
     // 3) Mobil uygulama (Capacitor, localhost:80/443/boş port) → mutlak Render URL
-    const PRODUCTION_HOST = 'urfa-link.onrender.com';
+    const PRODUCTION_HOST = 'urfa-link-h6c7.onrender.com';
     // Detect Capacitor correctly
     const isCapacitor = window.hasOwnProperty('Capacitor');
     const isLocalDev = window.location.hostname === 'localhost' && window.location.port !== '' && window.location.port !== '80' && window.location.port !== '443';

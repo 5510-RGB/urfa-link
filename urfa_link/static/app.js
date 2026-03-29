@@ -5,13 +5,20 @@ document.addEventListener('DOMContentLoaded', () => {
     // 2) Canlı web (urfa-link.onrender.com) → göreceli URL
     // 3) Mobil uygulama (Capacitor, localhost:80/443/boş port) → mutlak Render URL
     const PRODUCTION_HOST = 'urfa-link.onrender.com';
+    // Detect Capacitor correctly
+    const isCapacitor = window.hasOwnProperty('Capacitor');
     const isLocalDev = window.location.hostname === 'localhost' && window.location.port !== '' && window.location.port !== '80' && window.location.port !== '443';
     const isProductionWeb = window.location.hostname === PRODUCTION_HOST;
-    const useRelativeUrl = isLocalDev || isProductionWeb;
+    
+    // If it's Capacitor, we ALWAYS want to use the absolute URL to our production backend
+    const useRelativeUrl = (isLocalDev || isProductionWeb) && !isCapacitor;
+    
     const API_BASE_URL = useRelativeUrl ? '' : 'https://' + PRODUCTION_HOST;
     const WS_BASE_URL = useRelativeUrl
         ? ((window.location.protocol === 'https:' ? 'wss://' : 'ws://') + window.location.host)
         : 'wss://' + PRODUCTION_HOST;
+
+    console.log("Environment Detection:", { isCapacitor, isLocalDev, isProductionWeb, useRelativeUrl, API_BASE_URL });
 
     const originalFetch = window.fetch;
     window.fetch = function() {

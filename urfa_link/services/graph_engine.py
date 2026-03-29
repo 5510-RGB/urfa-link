@@ -12,7 +12,8 @@ class GraphEngine:
             phone=user.phone,
             district=user.district,
             education=user.education,
-            interest_vector=user.interest_vector,
+            bio="", # Ensure default bio exists
+            interest_vector=str(user.interest_vector),
             latitude=user.latitude,
             longitude=user.longitude
         )

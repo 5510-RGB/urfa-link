@@ -22,6 +22,9 @@ class UserDB(Base):
     reset_otp = Column(String, nullable=True)
     profile_image = Column(String, nullable=True)
     is_admin = Column(Boolean, default=False)
+    email = Column(String, nullable=True)
+    login_otp = Column(String, nullable=True)
+    login_otp_expires = Column(DateTime, nullable=True)
 
 class MessageDB(Base):
     __tablename__ = "messages"

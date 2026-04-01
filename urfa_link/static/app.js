@@ -613,7 +613,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const payload = {
             name: document.getElementById('name').value,
             phone: document.getElementById('phone').value,
-            password: document.getElementById('password').value
+            password: document.getElementById('password').value,
+            email: document.getElementById('reg_email').value || null
         };
 
         try {
@@ -654,7 +655,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Handle Login Form Submit
+    // Handle Login Form Submit - 2 Step (Phase 1: credentials, Phase 2: OTP)
+    let loginPhoneCache = null; // Store phone for OTP step
+    let loginStep = 1;
+    const loginStep1El = document.getElementById('login-step1');
+    const loginStep2El = document.getElementById('login-step2');
+    const otpSentMsg = document.getElementById('otp-sent-msg');
+
     loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
 
@@ -663,42 +670,50 @@ document.addEventListener('DOMContentLoaded', () => {
         loginSpinner.classList.remove('hidden');
         loginSubmitBtn.disabled = true;
 
-        const payload = {
-            phone: document.getElementById('login_phone').value,
-            password: document.getElementById('login_password').value
-        };
-
         try {
-            const loginReq = await fetch('/users/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            const loginRes = await loginReq.json();
+            if (loginStep === 1) {
+                // Phase 1: Send credentials
+                const payload = {
+                    phone: document.getElementById('login_phone').value,
+                    password: document.getElementById('login_password').value
+                };
 
-            if (!loginReq.ok) {
-                throw new Error(loginRes.detail || 'Giriş başarısız oldu.');
+                const loginReq = await fetch('/users/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const loginRes = await loginReq.json();
+
+                if (!loginReq.ok) throw new Error(loginRes.detail || 'Giriş başarısız oldu.');
+
+                if (loginRes.otp_required) {
+                    // Switch to OTP step
+                    loginPhoneCache = payload.phone;
+                    loginStep = 2;
+                    loginStep1El.classList.add('hidden');
+                    loginStep2El.classList.remove('hidden');
+                    otpSentMsg.textContent = loginRes.message;
+                    loginBtnText.textContent = 'Kodu Doğrula';
+                } else {
+                    // Direct login (no email)
+                    await _finishLogin(loginRes);
+                }
+
+            } else {
+                // Phase 2: Verify OTP
+                const otp = document.getElementById('login_otp').value;
+                const verifyReq = await fetch('/users/verify-login-otp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone: loginPhoneCache, otp })
+                });
+                const verifyRes = await verifyReq.json();
+
+                if (!verifyReq.ok) throw new Error(verifyRes.detail || 'Geçersiz kod.');
+
+                await _finishLogin(verifyRes);
             }
-
-            const userId = loginRes.user_id;
-
-            // Fetch Matches
-            const matchReq = await fetch(`/users/${userId}/matches`);
-            const matchData = await matchReq.json();
-
-            if (!matchReq.ok) throw new Error('Eşleşmeler alınırken hata oluştu.');
-
-            const userData = {
-                name: loginRes.name,
-                bio: loginRes.bio || "Biyografi yükleniyor...",
-                district: loginRes.district,
-                education: loginRes.education,
-                profile_image: loginRes.profile_image,
-                is_admin: loginRes.is_admin
-            };
-
-            enterApp(userId, userData, matchData);
-
         } catch (error) {
             loginErrorMsg.textContent = error.message;
             loginErrorMsg.classList.remove('hidden');
@@ -708,6 +723,31 @@ document.addEventListener('DOMContentLoaded', () => {
             loginSubmitBtn.disabled = false;
         }
     });
+
+    async function _finishLogin(loginRes) {
+        const userId = loginRes.user_id;
+        const matchReq = await fetch(`/users/${userId}/matches`);
+        const matchData = await matchReq.json();
+        if (!matchReq.ok) throw new Error('Eşleşmeler alınırken hata oluştu.');
+
+        const userData = {
+            name: loginRes.name,
+            bio: loginRes.bio || 'Biyografi yükleniyor...',
+            district: loginRes.district,
+            education: loginRes.education,
+            profile_image: loginRes.profile_image,
+            is_admin: loginRes.is_admin
+        };
+
+        // Reset login form state
+        loginStep = 1;
+        loginStep1El.classList.remove('hidden');
+        loginStep2El.classList.add('hidden');
+        loginBtnText.textContent = 'Giriş Yap';
+        loginPhoneCache = null;
+
+        enterApp(userId, userData, matchData);
+    }
 
     // Remove Old BackBtn listener if lingering
     // Handle Back Button

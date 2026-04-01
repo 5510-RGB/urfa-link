@@ -15,10 +15,15 @@ class RegistrationRequest(BaseModel):
     name: str
     phone: str
     password: str
+    email: str | None = None
 
 class LoginRequest(BaseModel):
     phone: str
     password: str
+
+class LoginVerifyRequest(BaseModel):
+    phone: str
+    otp: str
 
 class PasswordResetRequest(BaseModel):
     phone: str

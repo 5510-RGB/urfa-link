@@ -49,6 +49,11 @@
                     </div>
 
                     <div class="form-group">
+                        <label for="reg_email">E-posta Adresi</label>
+                        <input type="email" id="reg_email" placeholder="ornek@gmail.com">
+                    </div>
+
+                    <div class="form-group">
                         <label for="password">Şifre</label>
                         <input type="password" id="password" required placeholder="Güvenli bir şifre belirleyin">
                     </div>
@@ -82,13 +87,25 @@
             <section id="login-view" class="glass-panel hidden">
                 <h2>Giriş Yap</h2>
                 <form id="loginForm">
-                    <div class="form-group">
-                        <label for="login_phone">Telefon Numarası</label>
-                        <input type="tel" id="login_phone" required placeholder="05XX XXX XX XX">
+                    <!-- Step 1: Phone + Password -->
+                    <div id="login-step1">
+                        <div class="form-group">
+                            <label for="login_phone">Telefon Numarası</label>
+                            <input type="tel" id="login_phone" placeholder="05XX XXX XX XX">
+                        </div>
+                        <div class="form-group">
+                            <label for="login_password">Şifre</label>
+                            <input type="password" id="login_password" placeholder="Şifreniz">
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="login_password">Şifre</label>
-                        <input type="password" id="login_password" required placeholder="Şifreniz">
+
+                    <!-- Step 2: OTP (hidden initially) -->
+                    <div id="login-step2" class="hidden">
+                        <p id="otp-sent-msg" style="color: var(--primary-color); margin-bottom: 10px; font-size: 0.9rem;"></p>
+                        <div class="form-group">
+                            <label for="login_otp">Doğrulama Kodu</label>
+                            <input type="text" id="login_otp" placeholder="6 Haneli Kod" maxlength="6" autocomplete="one-time-code">
+                        </div>
                     </div>
 
                     <button type="submit" class="btn-primary" id="loginSubmitBtn">

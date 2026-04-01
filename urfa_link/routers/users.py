@@ -2,19 +2,22 @@ from fastapi import APIRouter, HTTPException, status, Depends, UploadFile, File
 from sqlalchemy.orm import Session
 from typing import List
 import uuid
-import random
 import os
 import shutil
 from pydantic import BaseModel
 from passlib.context import CryptContext
 
-from models import RegistrationRequest, LoginRequest, UserNode, MatchResult, PasswordResetRequest, PasswordVerifyRequest, ProfileUpdateRequest, SwipeRequest
+from models import RegistrationRequest, LoginRequest, UserNode, MatchResult, PasswordResetRequest, PasswordVerifyRequest, ProfileUpdateRequest, SwipeRequest, LoginVerifyRequest
 from database import get_db
 from models_db import UserDB, MatchActionDB
 from services.security import SecurityProtocol
 from services.ai_bio_analyzer import AIBioAnalyzer
 from services.graph_engine import graph_db
 from services.geo_engine import GeoIndex
+from services.email_service import send_otp_email
+import random
+import string
+from datetime import datetime, timedelta
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -68,7 +71,8 @@ async def register_user(request: RegistrationRequest, db: Session = Depends(get_
         interest_vector=str(new_user.interest_vector),
         latitude=new_user.latitude,
         longitude=new_user.longitude,
-        is_admin=is_admin_user
+        is_admin=is_admin_user,
+        email=request.email
     )
     db.add(db_user)
     db.commit()
@@ -84,10 +88,55 @@ async def login_user(request: LoginRequest, db: Session = Depends(get_db)):
         
     if not pwd_context.verify(request.password, user.hashed_password):
         raise HTTPException(status_code=400, detail="Geçersiz Telefon Numarası veya Şifre")
+
+    # If user has email, send OTP
+    if user.email:
+        otp = ''.join(random.choices(string.digits, k=6))
+        user.login_otp = otp
+        user.login_otp_expires = datetime.utcnow() + timedelta(minutes=5)
+        db.commit()
         
+        send_otp_email(user.email, otp, user.name)
+        
+        return {
+            "otp_required": True,
+            "message": f"Doğrulama kodu {user.email} adresine gönderildi."
+        }
+    
+    # No email - direct login (backward compat)
     return {
+        "otp_required": False,
         "message": "Giriş Başarılı", 
         "user_id": user.id, 
+        "name": user.name,
+        "bio": user.bio,
+        "district": user.district,
+        "education": user.education,
+        "profile_image": user.profile_image,
+        "is_admin": user.is_admin
+    }
+
+@router.post("/verify-login-otp")
+async def verify_login_otp(request: LoginVerifyRequest, db: Session = Depends(get_db)):
+    user = db.query(UserDB).filter(UserDB.phone == request.phone).first()
+    if not user:
+        raise HTTPException(status_code=400, detail="Kullanıcı bulunamadı")
+    
+    if not user.login_otp or user.login_otp != request.otp:
+        raise HTTPException(status_code=400, detail="Geçersiz doğrulama kodu")
+    
+    if user.login_otp_expires and datetime.utcnow() > user.login_otp_expires:
+        raise HTTPException(status_code=400, detail="Doğrulama kodunun süresi doldu")
+    
+    # Clear OTP after successful use
+    user.login_otp = None
+    user.login_otp_expires = None
+    db.commit()
+    
+    return {
+        "otp_required": False,
+        "message": "Giriş Başarılı",
+        "user_id": user.id,
         "name": user.name,
         "bio": user.bio,
         "district": user.district,

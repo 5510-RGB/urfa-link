@@ -10,6 +10,29 @@ import models_db
 # Create database tables
 Base.metadata.create_all(bind=engine)
 
+# Runtime migration: Add new columns if they don't exist
+def run_migrations():
+    try:
+        with engine.connect() as conn:
+            # PostgreSQL supports IF NOT EXISTS
+            from sqlalchemy import text
+            migrations = [
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS email VARCHAR",
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS login_otp VARCHAR",
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS login_otp_expires TIMESTAMP",
+            ]
+            for sql in migrations:
+                try:
+                    conn.execute(text(sql))
+                    conn.commit()
+                except Exception as e:
+                    # Column may already exist (SQLite) or other non-fatal error
+                    print(f"Migration note: {e}")
+    except Exception as e:
+        print(f"Migration error: {e}")
+
+run_migrations()
+
 app = FastAPI(
     title="Urfa-Link API",
     description="High-performance social networking project based on Anti-Gravity Core v2.0",

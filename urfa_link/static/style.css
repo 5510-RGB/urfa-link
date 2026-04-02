@@ -154,6 +154,13 @@ h2 {
     gap: 1rem;
 }
 
+@media (max-width: 600px) {
+    .row {
+        flex-direction: column;
+        gap: 0;
+    }
+}
+
 .col {
     flex: 1;
 }

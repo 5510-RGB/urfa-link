@@ -124,6 +124,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (userData && userData.daily_status !== undefined) {
              updateStatusUI(userData.daily_status);
         }
+        
+        // Finalize Story
+        if (userData && userData.story_image) {
+            window.currentUserStory = userData.story_image;
+        }
 
         // Handle Profile Image if returned on login/register
         if (userData && userData.profile_image) {
@@ -275,12 +280,40 @@ document.addEventListener('DOMContentLoaded', () => {
             if (map) {
                 map.setView([lat, lng], 13);
 
-                // Add a special marker for ME
-                const myMarker = L.marker([lat, lng]).addTo(map).bindPopup("<b>Siz Buradasınız</b>");
+                // Add a special marker for ME (using profile info)
+                const myAvatar = window.currentUserAvatar || 'https://i.pravatar.cc/100';
+                const myName = profileName.textContent || 'Siz';
                 const myStatus = document.getElementById('profile-status-text').textContent;
-                if (myStatus) {
-                    myMarker.setPopupContent(`<b>Siz Buradasınız</b><br><div style="background:var(--accent-glow);color:#000;font-size:0.7rem;padding:3px 8px;border-radius:10px;margin-top:5px;">💬 ${myStatus}</div>`);
-                }
+                const myStory = window.currentUserStory || null; // Will need to update this on story upload
+                
+                const hasStory = !!myStory;
+                const ringClass = hasStory ? 'story-ring' : '';
+
+                const myIcon = L.divIcon({
+                    className: 'custom-map-marker',
+                    html: `
+                        <div class="${ringClass}" style="width: 46px; height: 46px; display:flex; align-items:center; justify-content:center;">
+                            <div style="width: 40px; height: 40px; border-radius: 50%; overflow: hidden; border: 2px solid #000;">
+                                <img src="${myAvatar}" style="width: 100%; height: 100%; object-fit: cover;">
+                            </div>
+                        </div>
+                    `,
+                    iconSize: [46, 46],
+                    iconAnchor: [23, 23]
+                });
+
+                const myMarker = L.marker([lat, lng], { icon: myIcon }).addTo(map);
+                const statusBubble = myStatus ? `<div style="background:var(--accent-glow);color:#000;font-size:0.7rem;padding:3px 8px;border-radius:10px;margin:5px 0;">💬 ${myStatus}</div>` : '';
+                const watchStoryBtn = hasStory ? `<button onclick="window.viewStory('${myStory}', '${myName}', '${myAvatar}')" style="margin-top: 5px; background: linear-gradient(45deg, #f09433, #bc1888); color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; width:100%;">📸 Hikayemi İzle</button>` : '';
+
+                myMarker.bindPopup(`
+                    <div style="text-align:center; min-width:120px;">
+                        <strong>${myName} (Siz)</strong><br>
+                        ${statusBubble}
+                        ${watchStoryBtn}
+                        <div style="margin-top:5px; font-size:0.8rem; color:var(--primary-color);">Kendi konumunuzdasınız.</div>
+                    </div>
+                `);
                 myMarker.openPopup();
                 markers.push(myMarker);
             }
@@ -487,6 +520,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!req.ok) throw new Error("Yükleme başarısız.");
                 const res = await req.json();
 
+                window.currentUserStory = res.story_image; // Cache for self-marker
                 alert("Hikayeniz başarıyla paylaşıldı! Haritada renkli halka ile görünecek.");
                 loadMatches(); // Refresh map to show story ring
 
@@ -1514,8 +1548,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const closeStoryBtn = document.getElementById('closeStoryBtn');
-    if (closeStoryBtn) {
-        closeStoryBtn.addEventListener('click', closeStory);
+    async function loadMatches() {
+        if (!currentUserId) return;
+        try {
+            const req = await fetch(`/users/${currentUserId}/matches`);
+            if (req.ok) {
+                const matchData = await req.json();
+                renderMatches(matchData);
+                initMap(matchData);
+            }
+        } catch (err) {
+            console.error("Match yüklenemedi:", err);
+        }
     }
 
 });

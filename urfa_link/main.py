@@ -20,6 +20,11 @@ def run_migrations():
                 "ALTER TABLE users ADD COLUMN IF NOT EXISTS email VARCHAR",
                 "ALTER TABLE users ADD COLUMN IF NOT EXISTS login_otp VARCHAR",
                 "ALTER TABLE users ADD COLUMN IF NOT EXISTS login_otp_expires TIMESTAMP",
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS daily_status VARCHAR",
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS status_updated_at TIMESTAMP",
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS last_seen TIMESTAMP",
+                "ALTER TABLE messages ADD COLUMN IF NOT EXISTS is_read BOOLEAN DEFAULT FALSE",
+                "ALTER TABLE messages ADD COLUMN IF NOT EXISTS read_at TIMESTAMP",
             ]
             for sql in migrations:
                 try:

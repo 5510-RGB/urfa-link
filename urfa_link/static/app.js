@@ -104,15 +104,44 @@ document.addEventListener('DOMContentLoaded', () => {
     // Messages Tab Elements
     const messagesTabContainer = document.getElementById('tab-messages');
 
-    // Helper: Switch Auth View
-    function switchAuthView(hideView, showView) {
+    // === CRITICAL: AUTH VIEW SWITCHING (Must be first and guarded) ===
+    const switchAuthView = (hideView, showView) => {
+        if (!hideView || !showView) return;
         hideView.classList.remove('active');
         setTimeout(() => {
             hideView.classList.add('hidden');
             showView.classList.remove('hidden');
             setTimeout(() => showView.classList.add('active'), 50);
         }, 300);
+    };
+
+    if (showLoginBtn) {
+        showLoginBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            switchAuthView(registerView, loginView);
+        });
     }
+
+    if (showRegisterBtn) {
+        showRegisterBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            switchAuthView(loginView, registerView);
+        });
+    }
+
+    if (showForgotBtn) {
+        showForgotBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (typeof showForgotPasswordView === 'function') showForgotPasswordView();
+        });
+    }
+
+    const reset1 = document.getElementById('backToLoginFromReset1');
+    if (reset1) reset1.addEventListener('click', (e) => { e.preventDefault(); switchAuthView(forgotView, loginView); });
+
+    const reset2 = document.getElementById('backToLoginFromReset2');
+    if (reset2) reset2.addEventListener('click', (e) => { e.preventDefault(); switchAuthView(forgotView, loginView); });
+
 
     // Helper: Enter App
     function enterApp(userId, userData, matchData) {
@@ -207,11 +236,15 @@ document.addEventListener('DOMContentLoaded', () => {
             }).addTo(map);
 
             // Invalidate size when tab becomes visible
-            document.querySelector('[data-tab="tab-map"]').addEventListener('click', () => {
-                setTimeout(() => { map.invalidateSize(); }, 200);
-            });
+            const mapTab = document.querySelector('[data-tab="tab-map"]');
+            if (mapTab) {
+                mapTab.addEventListener('click', () => {
+                    setTimeout(() => { map.invalidateSize(); }, 200);
+                });
+            }
 
-            document.getElementById('locateMeBtn').addEventListener('click', updateMyLocation);
+            const locBtn = document.getElementById('locateMeBtnSettings');
+            if (locBtn) locBtn.addEventListener('click', updateMyLocation);
         }
 
         // Clear existing markers
@@ -362,15 +395,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
         appContainer.classList.add('hidden');
         authContainer.classList.remove('hidden');
-        switchAuthView(registerView, loginView);
-        registerForm.reset();
-        loginForm.reset();
+        
+        // Reset to initial auth view
+        if (typeof switchAuthView === 'function') {
+            switchAuthView(registerView, loginView);
+        } else {
+            registerView.classList.add('hidden');
+            loginView.classList.remove('hidden');
+            loginView.classList.add('active');
+        }
+
+        if (registerForm) registerForm.reset();
+        if (loginForm) loginForm.reset();
 
         // Reset tabs to default home
         navItems.forEach(nb => nb.classList.remove('active'));
         tabContents.forEach(tc => tc.classList.add('hidden'));
-        document.querySelector('[data-tab="tab-home"]').classList.add('active');
-        document.getElementById('tab-home').classList.remove('hidden');
+        
+        const homeTab = document.querySelector('[data-tab="tab-home"]');
+        if (homeTab) homeTab.classList.add('active');
+        const homeView = document.getElementById('tab-home');
+        if (homeView) homeView.classList.remove('hidden');
     }
 
     // Tab Navigation Logic
@@ -649,37 +694,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    logoutBtn.addEventListener('click', logout);
-
-    const deleteAccountBtn = document.getElementById('deleteAccountBtn');
-    if (deleteAccountBtn) {
-        deleteAccountBtn.addEventListener('click', async () => {
-            if (!currentUserId) return;
-            const confirmDelete = confirm("DİKKAT! Hesabını kalıcı olarak silmek istediğine emin misin? Bu işlem KVKK kapsamında geri alınamaz (Bütün eşleşmelerin ve mesajların silinir).");
-            if (confirmDelete) {
-                try {
-                    const req = await fetch(`/users/${currentUserId}`, {
-                        method: 'DELETE'
-                    });
-                    if (req.ok) {
-                        alert("Hesabın ve tüm verilerin sistemlerimizden kalıcı olarak silinmiştir.");
-                        logout();
-                    } else {
-                        const errData = await req.json();
-                        throw new Error(errData.detail || "Silme işlemi başarısız.");
-                    }
-                } catch (e) {
-                    alert("Hesap silinirken bir hata oluştu: " + e.message);
-                }
-            }
-        });
-    }
-
-    // Navigation Event Listeners
-    showLoginBtn.addEventListener('click', (e) => { e.preventDefault(); switchAuthView(registerView, loginView); });
-    showRegisterBtn.addEventListener('click', (e) => { e.preventDefault(); switchAuthView(loginView, registerView); });
-
-    // Forgot Password View Elements
+    // === Forgot Password Elements & View (Restored) ===
     const forgotFormStep1 = document.getElementById('forgotPasswordFormStep1');
     const forgotFormStep2 = document.getElementById('forgotPasswordFormStep2');
     const resetSubtitle = document.getElementById('resetSubtitle');
@@ -690,124 +705,131 @@ document.addEventListener('DOMContentLoaded', () => {
     const verifyOtpBtn = document.getElementById('verifyOtpBtn');
 
     function showForgotPasswordView() {
-        forgotFormStep1.classList.remove('hidden');
-        forgotFormStep2.classList.add('hidden');
-        resetSubtitle.textContent = "Telefon numaranızı girerek şifrenizi sıfırlayabilirsiniz.";
-        forgotFormStep1.reset();
-        forgotFormStep2.reset();
+        if (forgotFormStep1) forgotFormStep1.classList.remove('hidden');
+        if (forgotFormStep2) forgotFormStep2.classList.add('hidden');
+        if (resetSubtitle) resetSubtitle.textContent = "Telefon numaranızı girerek şifrenizi sıfırlayabilirsiniz.";
+        if (forgotFormStep1) forgotFormStep1.reset();
+        if (forgotFormStep2) forgotFormStep2.reset();
         switchAuthView(loginView, forgotView);
     }
 
-    showForgotBtn.addEventListener('click', (e) => { e.preventDefault(); showForgotPasswordView(); });
-    document.getElementById('backToLoginFromReset1').addEventListener('click', (e) => { e.preventDefault(); switchAuthView(forgotView, loginView); });
-    document.getElementById('backToLoginFromReset2').addEventListener('click', (e) => { e.preventDefault(); switchAuthView(forgotView, loginView); });
+    // Helper: Logout (Refactored)
+    window.logout = logout; 
 
     // Step 1: Send OTP
-    forgotFormStep1.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const phone = resetPhoneInput.value;
-        sendOtpBtn.disabled = true;
+    if (forgotFormStep1) {
+        forgotFormStep1.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const phone = resetPhoneInput.value;
+            if (sendOtpBtn) sendOtpBtn.disabled = true;
 
-        try {
-            const req = await fetch('/users/forgot-password', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ phone })
-            });
-            const res = await req.json();
-            if (!req.ok) throw new Error(res.detail || 'Bir hata oluştu.');
+            try {
+                const req = await fetch('/users/forgot-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone })
+                });
+                const res = await req.json();
+                if (!req.ok) throw new Error(res.detail || 'Bir hata oluştu.');
 
-            // Success: Switch to Step 2
-            forgotFormStep1.classList.add('hidden');
-            forgotFormStep2.classList.remove('hidden');
-            resetSubtitle.textContent = `Doğrulama kodu ${phone} numarasına gönderildi. Lütfen kodu ve yeni şifrenizi girin.`;
-        } catch (error) {
-            alert(error.message);
-        } finally {
-            sendOtpBtn.disabled = false;
-        }
-    });
+                // Success: Switch to Step 2
+                forgotFormStep1.classList.add('hidden');
+                if (forgotFormStep2) forgotFormStep2.classList.remove('hidden');
+                if (resetSubtitle) resetSubtitle.textContent = `Doğrulama kodu ${phone} numarasına gönderildi. Lütfen kodu ve yeni şifrenizi girin.`;
+            } catch (error) {
+                alert(error.message);
+            } finally {
+                if (sendOtpBtn) sendOtpBtn.disabled = false;
+            }
+        });
+    }
 
     // Step 2: Verify OTP and Reset
-    forgotFormStep2.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const phone = resetPhoneInput.value;
-        const otp = resetOtpInput.value;
-        const new_password = newPasswordInput.value;
-        verifyOtpBtn.disabled = true;
+    if (forgotFormStep2) {
+        forgotFormStep2.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const phone = resetPhoneInput.value;
+            const otp = resetOtpInput.value;
+            const new_password = newPasswordInput.value;
+            if (verifyOtpBtn) verifyOtpBtn.disabled = true;
 
-        try {
-            const req = await fetch('/users/reset-password', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ phone, otp, new_password })
-            });
-            const res = await req.json();
-            if (!req.ok) throw new Error(res.detail || 'Geçersiz kod veya başka bir hata.');
+            try {
+                const req = await fetch('/users/reset-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone, otp, new_password })
+                });
+                const res = await req.json();
+                if (!req.ok) throw new Error(res.detail || 'Geçersiz kod veya başka bir hata.');
 
-            alert("Şifreniz başarıyla güncellendi! Giriş yapabilirsiniz.");
-            switchAuthView(forgotView, loginView);
-        } catch (error) {
-            alert(error.message);
-        } finally {
-            verifyOtpBtn.disabled = false;
-        }
-    });
+                alert("Şifreniz başarıyla güncellendi! Giriş yapabilirsiniz.");
+                switchAuthView(forgotView, loginView);
+            } catch (error) {
+                alert(error.message);
+            } finally {
+                if (verifyOtpBtn) verifyOtpBtn.disabled = false;
+            }
+        });
+    }
 
     // Handle Form Submit
-    registerForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
+    if (registerForm) {
+        registerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
 
-        // Hide previous errors & show loading state
-        errorMsg.classList.add('hidden');
-        btnText.classList.add('hidden');
-        spinner.classList.remove('hidden');
-        submitBtn.disabled = true;
+            // Hide previous errors & show loading state
+            if (errorMsg) errorMsg.classList.add('hidden');
+            if (btnText) btnText.classList.add('hidden');
+            if (spinner) spinner.classList.remove('hidden');
+            if (submitBtn) submitBtn.disabled = true;
 
-        const payload = {
-            name: document.getElementById('name').value,
-            phone: document.getElementById('phone').value,
-            password: document.getElementById('password').value,
-            email: document.getElementById('reg_email').value || null
-        };
+            const payload = {
+                name: document.getElementById('name')?.value,
+                phone: document.getElementById('phone')?.value,
+                password: document.getElementById('password')?.value,
+                email: document.getElementById('reg_email')?.value || null
+            };
 
-        try {
-            // 1. Register User
-            const regResponse = await fetch('/users/register', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
+            try {
+                // 1. Register User
+                const regResponse = await fetch('/users/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
 
-            const regData = await regResponse.json();
+                const regData = await regResponse.json();
 
-            if (!regResponse.ok) {
-                throw new Error(regData.detail || 'Kayıt sırasında bir hata oluştu.');
+                if (!regResponse.ok) {
+                    throw new Error(regData.detail || 'Kayıt sırasında bir hata oluştu.');
+                }
+
+                const userId = regData.id;
+
+                // 2. Fetch Matches
+                const matchResponse = await fetch(`/users/${userId}/matches`);
+                const matchData = await matchResponse.json();
+
+                if (!matchResponse.ok) {
+                    throw new Error('Eşleşmeler alınırken hata oluştu.');
+                }
+
+                // 3. Enter App
+                enterApp(userId, payload, matchData);
+
+            } catch (error) {
+                if (errorMsg) {
+                    errorMsg.textContent = error.message;
+                    errorMsg.classList.remove('hidden');
+                }
+            } finally {
+                // Restore button state
+                if (spinner) spinner.classList.add('hidden');
+                if (btnText) btnText.classList.remove('hidden');
+                if (submitBtn) submitBtn.disabled = false;
             }
-
-            const userId = regData.id;
-
-            // 2. Fetch Matches
-            const matchResponse = await fetch(`/users/${userId}/matches`);
-            const matchData = await matchResponse.json();
-
-            if (!matchResponse.ok) {
-                throw new Error('Eşleşmeler alınırken hata oluştu.');
-            }
-
-            // 3. Enter App
-            enterApp(userId, payload, matchData);
-
-        } catch (error) {
-            errorMsg.textContent = error.message;
-            errorMsg.classList.remove('hidden');
-        } finally {
-            // Restore button state
-            spinner.classList.add('hidden');
-            btnText.classList.remove('hidden');
-            submitBtn.disabled = false;
-        }
-    });
+        });
+    }
 
     // Handle Login Form Submit - 2 Step (Phase 1: credentials, Phase 2: OTP)
     let loginPhoneCache = null; // Store phone for OTP step
@@ -816,67 +838,69 @@ document.addEventListener('DOMContentLoaded', () => {
     const loginStep2El = document.getElementById('login-step2');
     const otpSentMsg = document.getElementById('otp-sent-msg');
 
-    loginForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
+    if (loginForm) {
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
 
-        loginErrorMsg.classList.add('hidden');
-        loginBtnText.classList.add('hidden');
-        loginSpinner.classList.remove('hidden');
-        loginSubmitBtn.disabled = true;
+            if (loginErrorMsg) loginErrorMsg.classList.add('hidden');
+            if (loginBtnText) loginBtnText.classList.add('hidden');
+            if (loginSpinner) loginSpinner.classList.remove('hidden');
+            if (loginSubmitBtn) loginSubmitBtn.disabled = true;
 
-        try {
-            if (loginStep === 1) {
-                // Phase 1: Send credentials
-                const payload = {
-                    phone: document.getElementById('login_phone').value,
-                    password: document.getElementById('login_password').value
-                };
+            try {
+                if (loginStep === 1) {
+                    // Phase 1: Send credentials
+                    const phone = document.getElementById('login_phone')?.value;
+                    const password = document.getElementById('login_password')?.value;
 
-                const loginReq = await fetch('/users/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                const loginRes = await loginReq.json();
+                    const loginReq = await fetch('/users/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ phone, password })
+                    });
+                    const loginRes = await loginReq.json();
 
-                if (!loginReq.ok) throw new Error(loginRes.detail || 'Giriş başarısız oldu.');
+                    if (!loginReq.ok) throw new Error(loginRes.detail || 'Giriş başarısız oldu.');
 
-                if (loginRes.otp_required) {
-                    // Switch to OTP step
-                    loginPhoneCache = payload.phone;
-                    loginStep = 2;
-                    loginStep1El.classList.add('hidden');
-                    loginStep2El.classList.remove('hidden');
-                    otpSentMsg.textContent = loginRes.message;
-                    loginBtnText.textContent = 'Kodu Doğrula';
+                    if (loginRes.otp_required) {
+                        // Switch to OTP step
+                        loginPhoneCache = phone;
+                        loginStep = 2;
+                        if (loginStep1El) loginStep1El.classList.add('hidden');
+                        if (loginStep2El) loginStep2El.classList.remove('hidden');
+                        if (otpSentMsg) otpSentMsg.textContent = loginRes.message;
+                        if (loginBtnText) loginBtnText.textContent = 'Kodu Doğrula';
+                    } else {
+                        // Direct login (no email)
+                        await _finishLogin(loginRes);
+                    }
+
                 } else {
-                    // Direct login (no email)
-                    await _finishLogin(loginRes);
+                    // Phase 2: Verify OTP
+                    const otp = document.getElementById('login_otp')?.value;
+                    const verifyReq = await fetch('/users/verify-login-otp', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ phone: loginPhoneCache, otp })
+                    });
+                    const verifyRes = await verifyReq.json();
+
+                    if (!verifyReq.ok) throw new Error(verifyRes.detail || 'Geçersiz kod.');
+
+                    await _finishLogin(verifyRes);
                 }
-
-            } else {
-                // Phase 2: Verify OTP
-                const otp = document.getElementById('login_otp').value;
-                const verifyReq = await fetch('/users/verify-login-otp', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ phone: loginPhoneCache, otp })
-                });
-                const verifyRes = await verifyReq.json();
-
-                if (!verifyReq.ok) throw new Error(verifyRes.detail || 'Geçersiz kod.');
-
-                await _finishLogin(verifyRes);
+            } catch (error) {
+                if (loginErrorMsg) {
+                    loginErrorMsg.textContent = error.message;
+                    loginErrorMsg.classList.remove('hidden');
+                }
+            } finally {
+                if (loginSpinner) loginSpinner.classList.add('hidden');
+                if (loginBtnText) loginBtnText.classList.remove('hidden');
+                if (loginSubmitBtn) loginSubmitBtn.disabled = false;
             }
-        } catch (error) {
-            loginErrorMsg.textContent = error.message;
-            loginErrorMsg.classList.remove('hidden');
-        } finally {
-            loginSpinner.classList.add('hidden');
-            loginBtnText.classList.remove('hidden');
-            loginSubmitBtn.disabled = false;
-        }
-    });
+        });
+    }
 
     async function _finishLogin(loginRes) {
         const userId = loginRes.user_id;

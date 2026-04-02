@@ -34,6 +34,11 @@ class ConnectionManager:
             })
         else:
             print(f"Receiver {receiver_id} offline. Queued in DB.")
+            
+    async def send_raw_json(self, payload: dict, receiver_id: str):
+        if receiver_id in self.active_connections:
+            websocket = self.active_connections[receiver_id]
+            await websocket.send_json(payload)
 
 manager = ConnectionManager()
 
@@ -51,6 +56,26 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
             # Data expected: {"receiver_id": "...", "content": "..."}
             receiver_id = data.get("receiver_id")
             content = data.get("content")
+            action = data.get("action")
+            
+            if action == "seen":
+                msg_id = data.get("message_id")
+                sender_to_notify = data.get("sender_id")
+                if msg_id and sender_to_notify:
+                    db = SessionLocal()
+                    try:
+                        msg = db.query(models_db.MessageDB).filter(models_db.MessageDB.id == msg_id).first()
+                        if msg and msg.receiver_id == client_id:
+                            msg.is_read = True
+                            import datetime
+                            msg.read_at = datetime.datetime.utcnow()
+                            db.commit()
+                            await manager.send_raw_json({"action": "read_receipt", "message_id": msg_id}, sender_to_notify)
+                    except Exception as e:
+                        print(e)
+                    finally:
+                        db.close()
+                continue
 
             if receiver_id and content:
                 # 1. Save to Database with a short-lived session
@@ -112,14 +137,22 @@ async def send_text_message(
     db.commit()
 
     # 2. Try to send in real-time
-    await manager.send_personal_message(payload.content, sender_id, receiver_id)
+    await manager.send_raw_json({
+        "action": "new_message",
+        "message_id": new_msg.id,
+        "sender_id": sender_id,
+        "sender_name": sender.name,
+        "sender_image": sender.profile_image,
+        "content": payload.content
+    }, receiver_id)
 
-    return {"status": "ok", "content": payload.content}
+    return {"status": "ok", "content": payload.content, "message_id": new_msg.id}
 
 @router.post("/{sender_id}/{receiver_id}/upload-image")
 async def upload_chat_image(
     sender_id: str, 
     receiver_id: str, 
+    is_one_time: bool = False,
     file: UploadFile = File(...), 
     db: Session = Depends(get_db)
 ):
@@ -149,6 +182,8 @@ async def upload_chat_image(
     # Format the message content
     image_url = f"/{file_path}"
     message_content = f"[IMAGE]:{image_url}"
+    if is_one_time:
+        message_content = f"[ONETIMEIMAGE]:{image_url}"
 
     # 1. Save to Database
     new_msg = models_db.MessageDB(
@@ -160,9 +195,22 @@ async def upload_chat_image(
     db.commit()
 
     # 2. Try to send in real-time
-    await manager.send_personal_message(message_content, sender_id, receiver_id)
+    await manager.send_raw_json({
+        "action": "new_message",
+        "message_id": new_msg.id,
+        "sender_id": sender_id,
+        "sender_name": sender.name,
+        "sender_image": sender.profile_image,
+        "content": message_content
+    }, receiver_id)
 
-    return {"message": "Image uploaded successfully", "content": message_content}
+    return {"message": "Image uploaded successfully", "content": message_content, "message_id": new_msg.id}
+
+@router.get("/status/{user_id}")
+async def get_user_status(user_id: str):
+    # manager is defined above: manager = ConnectionManager()
+    is_online = user_id in manager.active_connections
+    return {"user_id": user_id, "is_online": is_online}
 
 @router.get("/history/{user_id}/{peer_id}")
 def get_chat_history(user_id: str, peer_id: str, db: Session = Depends(get_db)):

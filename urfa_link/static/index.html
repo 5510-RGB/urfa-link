@@ -3,8 +3,10 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0d1117">
     <title>Urfa-Link | Siber Sosyal Ağ</title>
     <!-- Modern Font: Outfit -->
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
@@ -314,10 +316,13 @@
                 <button id="closeChatBtn" class="icon-btn">⬅</button>
                 <div class="chat-user-info">
                     <h3 id="chat-peer-name">Kullanıcı</h3>
-                    <p class="status-indicator">● Çevrimiçi</p>
+                    <p class="status-indicator" id="chat-peer-status">● Bekleniyor...</p>
                 </div>
-                <div class="chat-actions">
-                    <button class="icon-btn">⋮</button>
+                <div class="chat-actions" style="position: relative;">
+                    <button class="icon-btn" id="chatMenuBtn">⋮</button>
+                    <div id="chatMenuDropdown" class="hidden" style="position: absolute; right: 0; top: 100%; background: var(--card-bg); border: 1px solid var(--panel-border); border-radius: 8px; padding: 10px; min-width: 150px; z-index: 200;">
+                        <button id="blockUserBtn" style="background: transparent; border: none; color: var(--error-color); width: 100%; text-align: left; cursor: pointer; padding: 5px;">🚫 Engelle ve Şikayet Et</button>
+                    </div>
                 </div>
             </header>
 
@@ -328,9 +333,13 @@
 
             <!-- Chat Input Area -->
             <footer class="chat-input-area">
+                <button id="aiIcebreakerBtn" class="icon-btn" style="margin-right: 0.2rem;" title="Yapay Zeka ile Mesaj Önerisi">🤖</button>
                 <input type="file" id="chatImageUpload" accept="image/*" hidden>
-                <button id="attachImageBtn" class="icon-btn" style="margin-right: 0.5rem;"
-                    title="Fotoğraf Gönder">📎</button>
+                <button id="attachImageBtn" class="icon-btn" style="margin-right: 0.2rem;"
+                    title="Galeriden Fotoğraf">📎</button>
+                <input type="file" id="chatCameraUpload" accept="image/*" capture="environment" hidden>
+                <button id="cameraImageBtn" class="icon-btn" style="margin-right: 0.5rem;"
+                    title="📸 Kameradan Çek (Tek Seferlik)">📸</button>
                 <input type="text" id="chat-input" placeholder="Mesaj yaz..." autocomplete="off">
                 <button id="sendMessageBtn" class="send-btn">➤</button>
             </footer>
@@ -396,11 +405,36 @@
                         </small>
                     </div>
 
+                    <div class="form-group" style="border-top: 1px solid var(--panel-border); padding-top: 15px; margin-top: 10px;">
+                        <label for="edit_status">Şu an ne yapıyorsun? (Haritada 24 saat görünür)</label>
+                        <input type="text" id="edit_status" placeholder="Örn: Kahve içiçiyorum ☕, Yürüyüşteyim 🌳" maxlength="50">
+                    </div>
+
                     <button type="submit" class="btn-primary" id="saveProfileBtn">
                         <span id="save-profile-text">Kaydet</span>
                         <div class="spinner hidden" id="save-profile-spinner"></div>
                     </button>
                 </form>
+            </main>
+        </div>
+
+        <!-- Connections Overlay Screen (Hidden initially) -->
+        <div id="connections-overlay" class="chat-overlay hidden" style="z-index: 110;">
+            <!-- Header -->
+            <header class="chat-header">
+                <button id="closeConnectionsBtn" class="icon-btn">⬅</button>
+                <div class="chat-user-info">
+                    <h3 id="connections-title">Bağlantılarım</h3>
+                </div>
+                <div class="chat-actions"></div>
+            </header>
+            
+            <div style="padding: 15px; border-bottom: 1px solid var(--panel-border); background: var(--bg-color);">
+                <input type="text" id="connectionsSearch" placeholder="Kişi ara..." style="width: 100%; border-radius: 8px; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid var(--panel-border); color: var(--text-primary); font-family: 'Outfit';">
+            </div>
+
+            <main class="app-content-scrollable" id="connections-list-container" style="padding: 10px; display: flex; flex-direction: column; gap: 10px;">
+                <!-- Connection items injected here -->
             </main>
         </div>
 

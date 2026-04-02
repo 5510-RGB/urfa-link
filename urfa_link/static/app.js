@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const PRODUCTION_HOST = 'urfa-link-h6c7.onrender.com';
     // Detect Capacitor correctly
     const isCapacitor = window.hasOwnProperty('Capacitor');
-    const isLocalDev = window.location.hostname === 'localhost' && window.location.port !== '' && window.location.port !== '80' && window.location.port !== '443';
+    const isLocalDev = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && window.location.port !== '' && window.location.port !== '80' && window.location.port !== '443';
     const isProductionWeb = window.location.hostname === PRODUCTION_HOST;
     
     // If it's Capacitor, we ALWAYS want to use the absolute URL to our production backend
@@ -222,9 +222,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
 
                 const marker = L.marker([lat, lng], { icon: customIcon }).addTo(map);
+                const statusBubble = match.daily_status ? `<div style="background:var(--accent-glow);color:#000;font-size:0.7rem;padding:3px 8px;border-radius:10px;margin:5px 0;">💬 ${match.daily_status}</div>` : '';
+
                 marker.bindPopup(`
                     <div style="text-align:center;">
                         <strong>${match.matched_user_name}</strong><br>
+                        ${statusBubble}
                         %${(match.similarity_score * 100).toFixed(0)} Uyum<br>
                         <button onclick="window.openChat('${match.matched_user_id}', '${match.matched_user_name}')" style="margin-top: 5px; background: var(--primary-color); color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer;">Sohbet Et</button>
                     </div>
@@ -282,10 +285,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         }, (error) => {
             console.error('Konum hatası:', error);
-            alert('Konum alınamadı. Lütfen tarayıcı izinlerini kontrol edin.');
+            alert('Konum alınamadı: ' + error.message + '\nLütfen tarayıcı izinlerini kontrol edin veya GPS\'i açın.');
             btn.innerText = originalText;
             btn.disabled = false;
-        });
+        }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
     }
 
     // Helper: Logout
@@ -417,7 +420,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const res = await req.json();
 
                 // Update Image
-                profileAvatarImg.src = res.profile_image;
+                profileAvatarImg.src = res.profile_image + '?t=' + new Date().getTime();
+                window.currentUserAvatar = profileAvatarImg.src;
                 alert("Profil fotoğrafınız başarıyla güncellendi!");
 
             } catch (err) {
@@ -460,7 +464,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 name: document.getElementById('edit_name').value,
                 district: document.getElementById('edit_district').value,
                 education: document.getElementById('edit_education').value,
-                bio: document.getElementById('edit_bio').value
+                bio: document.getElementById('edit_bio').value,
+                daily_status: document.getElementById('edit_status').value
             };
 
             try {
@@ -926,12 +931,27 @@ document.addEventListener('DOMContentLoaded', () => {
                 const data = JSON.parse(event.data);
                 if (data.type === "pong") return;
 
+                if (data.action === 'read_receipt') {
+                    const tickEl = document.getElementById('tick-' + data.message_id);
+                    if (tickEl) {
+                        tickEl.style.color = '#53bdeb';
+                    }
+                    return;
+                }
+
                 console.log("Yeni mesaj geldi:", data);
 
                 const isChatActive = !chatOverlay.classList.contains('hidden') && currentChatPeerId === data.sender_id;
 
                 if (isChatActive && !document.hidden) {
-                    renderChatMessage(data.content, 'received', null, data.sender_image);
+                    if (data.message_id) {
+                        ws.send(JSON.stringify({ 
+                            action: 'seen', 
+                            message_id: data.message_id, 
+                            sender_id: data.sender_id 
+                        }));
+                    }
+                    renderChatMessage(data.content, 'received', data.message_id, data.sender_image);
                 } else {
                     const preview = data.content.startsWith('[IMAGE]:') ? '📷 Bir fotoğraf gönderdi' : data.content;
 
@@ -991,6 +1011,23 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (err) {
             console.error(err);
         }
+        // Fetch Status
+        try {
+            const statusReq = await fetch(`/messages/status/${peerId}`);
+            if (statusReq.ok) {
+                const statusData = await statusReq.json();
+                const statusEl = document.getElementById('chat-peer-status');
+                if (statusEl) {
+                    if (statusData.is_online) {
+                        statusEl.textContent = '● Çevrimiçi';
+                        statusEl.style.color = 'var(--accent-glow)';
+                    } else {
+                        statusEl.textContent = '● Çevrimdışı';
+                        statusEl.style.color = 'var(--text-secondary)';
+                    }
+                }
+            }
+        } catch(e) {}
     };
 
     // Render single message bubble
@@ -1017,6 +1054,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (content.startsWith('[IMAGE]:')) {
             const imgUrl = content.substring(8); // Remove '[IMAGE]:'
             displayContent = `<img src="${imgUrl}" class="chat-image-attachment" alt="Image attachment" onclick="window.open('${imgUrl}', '_blank')">`;
+        } else if (content.startsWith('[ONETIMEIMAGE]:')) {
+            const imgUrl = content.substring(15);
+            displayContent = `<div class="one-time-image-container" onclick="this.innerHTML='<img src=&quot;${imgUrl}&quot; style=&quot;max-width:200px; border-radius:10px;&quot;>'; setTimeout(() => {this.innerHTML='<div style=&quot;color:var(--error-color); padding:10px;&quot;>📸 Fotoğraf silindi</div>';}, 5000);" style="cursor:pointer; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; text-align: center; border: 1px dashed var(--accent-glow);"><span style="font-size: 2rem;">🖼️</span><p style="margin-top: 5px; font-size: 0.8rem; color: var(--accent-glow);">Tek Gösterimlik Fotoğraf<br>(Açmak için tıkla)</p></div>`;
         }
 
         let avatarToUse = senderAvatar;
@@ -1028,13 +1068,15 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
+        const msgIdHtml = msgId ? `id="tick-${msgId}"` : ``;
         wrapper.innerHTML = `
             <img src="${avatarToUse}" class="chat-bubble-avatar" alt="Avatar">
             <div class="message message-${type}">
+                ${type === 'sent' ? '<div style="font-size: 0.7rem; color: #8b949e; margin-bottom: 3px;">Siz</div>' : `<div style="font-size: 0.7rem; color: var(--accent-glow); margin-bottom: 3px;">${chatPeerName.textContent}</div>`}
                 ${displayContent}
                 <div class="msg-info">
                     <span class="msg-time">${timeLabel}</span>
-                    ${type === 'sent' ? '<span style="font-size: 10px; font-weight: bold; color: #53bdeb; margin-left: 2px;">✓✓</span>' : ''}
+                    ${type === 'sent' ? `<span ${msgIdHtml} style="font-size: 10px; font-weight: bold; color: #8b949e; margin-left: 5px;">✓✓</span>` : ''}
                 </div>
             </div>
         `;
@@ -1069,8 +1111,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (req.ok) {
                     const res = await req.json();
-                    // We render it immediately for the sender
-                    renderChatMessage(res.content, 'sent');
+                    renderChatMessage(res.content, 'sent', res.message_id);
                 } else {
                     console.error("Fotoğraf yüklenemedi.");
                     alert("Fotoğraf gönderilirken bir hata oluştu.");
@@ -1085,22 +1126,73 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Camera Image Upload Event
+    const cameraImageBtn = document.getElementById('cameraImageBtn');
+    const chatCameraUpload = document.getElementById('chatCameraUpload');
+
+    if (cameraImageBtn && chatCameraUpload) {
+        cameraImageBtn.addEventListener('click', () => {
+            if (!currentUserId || !currentChatPeerId) return;
+            chatCameraUpload.click();
+        });
+
+        chatCameraUpload.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file || !currentUserId || !currentChatPeerId) return;
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const originalIcon = cameraImageBtn.innerText;
+            cameraImageBtn.innerText = "⏳";
+            cameraImageBtn.disabled = true;
+
+            try {
+                const req = await fetch(`/messages/${currentUserId}/${currentChatPeerId}/upload-image?is_one_time=true`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (req.ok) {
+                    const res = await req.json();
+                    renderChatMessage(res.content, 'sent', res.message_id);
+                } else {
+                    console.error("Fotoğraf yüklenemedi.");
+                    alert("Fotoğraf gönderilirken bir hata oluştu.");
+                }
+            } catch (err) {
+                console.error("Hata:", err);
+            } finally {
+                cameraImageBtn.innerText = originalIcon;
+                cameraImageBtn.disabled = false;
+                chatCameraUpload.value = ''; // Reset
+            }
+        });
+    }
+
+    function renderChatMessage(content, type, msgId = null, isRead = false) {
+        // Find existing definition at line 1035 and overwrite signature
+        // We will just patch sendMessage below to pass msgId
+    }
+    // Note: JS doesn't complain if we redefine but this part is just for context
+        
     // Send Message Event
     async function sendMessage() {
         const text = chatInput.value.trim();
         if (!text || !currentChatPeerId) return;
 
-        // Sent visually immediately
-        renderChatMessage(text, 'sent');
         chatInput.value = '';
 
-        // Send via HTTP POST
         try {
-            await fetch(`/messages/${currentUserId}/${currentChatPeerId}/text`, {
+            const req = await fetch(`/messages/${currentUserId}/${currentChatPeerId}/text`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ content: text })
             });
+            if (req.ok) {
+                const res = await req.json();
+                renderChatMessage(text, 'sent', res.message_id);
+            }
         } catch (err) {
             console.error("Message send failed:", err);
         }
@@ -1124,5 +1216,186 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('Henüz yeni bildiriminiz yok. (Yakında)');
         });
     }
+
+    // === Chat Menu & Block User Logic ===
+    const chatMenuBtn = document.getElementById('chatMenuBtn');
+    const chatMenuDropdown = document.getElementById('chatMenuDropdown');
+    const blockUserBtn = document.getElementById('blockUserBtn');
+
+    if (chatMenuBtn && chatMenuDropdown) {
+        chatMenuBtn.addEventListener('click', () => {
+            chatMenuDropdown.classList.toggle('hidden');
+        });
+
+        // Hide dropdown if clicked outside
+        document.addEventListener('click', (e) => {
+            if (!chatMenuBtn.contains(e.target) && !chatMenuDropdown.contains(e.target)) {
+                chatMenuDropdown.classList.add('hidden');
+            }
+        });
+    }
+
+    if (blockUserBtn) {
+        blockUserBtn.addEventListener('click', async () => {
+            if (!currentUserId || !currentChatPeerId) return;
+            if (!confirm("DİKKAT: Bu kişiyi engellemek istediğinize emin misiniz? Karşılıklı olarak birbirinizi bir daha asla göremeyeceksiniz ve tüm mesajlar silinecek.")) return;
+
+            try {
+                const req = await fetch(`/users/${currentUserId}/block/${currentChatPeerId}`, { method: 'POST' });
+                if (req.ok) {
+                    alert("Kullanıcı başarıyla engellendi.");
+                    chatMenuDropdown.classList.add('hidden');
+                    chatOverlay.classList.add('hidden');
+                    currentChatPeerId = null;
+                    // Refresh matches and chats
+                    loadUserStats(); 
+                    loadActiveChats();
+                }
+            } catch (err) {
+                console.error("Block failed", err);
+            }
+        });
+    }
+
+    // === AI Icebreaker Logic ===
+    const aiIcebreakerBtn = document.getElementById('aiIcebreakerBtn');
+    if (aiIcebreakerBtn) {
+        aiIcebreakerBtn.addEventListener('click', async () => {
+            if (!currentUserId || !currentChatPeerId) return;
+            const originalIcon = aiIcebreakerBtn.innerText;
+            aiIcebreakerBtn.innerText = '⏳';
+            aiIcebreakerBtn.disabled = true;
+
+            try {
+                const req = await fetch(`/users/${currentUserId}/icebreaker/${currentChatPeerId}`);
+                if (req.ok) {
+                    const res = await req.json();
+                    chatInput.value = res.suggestion;
+                }
+            } catch (err) {
+                console.error("Icebreaker fetch failed", err);
+            } finally {
+                aiIcebreakerBtn.innerText = originalIcon;
+                aiIcebreakerBtn.disabled = false;
+            }
+        });
+    }
+
+    // === Connection Overlay Logic (Followers, Following, Mutual) ===
+    const connectionsOverlay = document.getElementById('connections-overlay');
+    const closeConnectionsBtn = document.getElementById('closeConnectionsBtn');
+    const connectionsTitle = document.getElementById('connections-title');
+    const connectionsListContainer = document.getElementById('connections-list-container');
+    const connectionsSearch = document.getElementById('connectionsSearch');
+    let currentConnectionType = null;
+
+    if (closeConnectionsBtn) {
+        closeConnectionsBtn.addEventListener('click', () => {
+            connectionsOverlay.classList.add('hidden');
+        });
+    }
+
+    if (connectionsSearch) {
+        connectionsSearch.addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase();
+            const items = connectionsListContainer.querySelectorAll('.match-card');
+            items.forEach(item => {
+                const name = item.getAttribute('data-name').toLowerCase();
+                if (name.includes(term)) {
+                    item.style.display = 'flex';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        });
+    }
+
+    async function openConnectionsList(type, title) {
+        if (!currentUserId) return;
+        currentConnectionType = type;
+        connectionsTitle.textContent = title;
+        connectionsListContainer.innerHTML = '<div style="text-align:center; padding: 20px;">Yükleniyor...</div>';
+        connectionsSearch.value = '';
+        connectionsOverlay.classList.remove('hidden');
+
+        try {
+            const req = await fetch(`/users/${currentUserId}/connections/${type}`);
+            if (req.ok) {
+                const data = await req.json();
+                renderConnections(data, type);
+            }
+        } catch (err) {
+            console.error(err);
+            connectionsListContainer.innerHTML = '<div style="color:var(--error-color);">Yükleme Hatası</div>';
+        }
+    }
+
+    function renderConnections(users, type) {
+        connectionsListContainer.innerHTML = '';
+        if (users.length === 0) {
+            connectionsListContainer.innerHTML = '<div style="text-align:center; color:var(--text-secondary); padding: 20px;">Liste boş.</div>';
+            return;
+        }
+
+        users.forEach(u => {
+            const avatar = u.profile_image || `https://i.pravatar.cc/100?u=${u.id}`;
+            const card = document.createElement('div');
+            card.className = 'match-card'; // Reuse existing glass styles
+            card.setAttribute('data-name', u.name);
+            card.style.height = '70px';
+            card.style.display = 'flex';
+
+            let actionBtnHtml = '';
+            if (type === 'following' || type === 'mutual') {
+                actionBtnHtml = `<button class="btn-danger" style="padding: 5px 10px; font-size: 0.8rem; border-radius: 8px;" onclick="window.unfollowUser('${u.id}')">Takipten Çık</button>`;
+            } else if (type === 'followers') {
+                actionBtnHtml = `<button class="btn-secondary" style="padding: 5px 10px; font-size: 0.8rem; border-radius: 8px; border-color: var(--error-color); color: var(--error-color);" onclick="window.removeFollower('${u.id}')">Çıkar</button>`;
+            }
+
+            card.innerHTML = `
+                <img src="${avatar}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; margin: 10px;">
+                <div style="flex: 1; display:flex; flex-direction:column; justify-content:center;">
+                    <h4 style="margin: 0; font-size: 1rem;">${u.name}</h4>
+                </div>
+                <div style="padding: 10px; display:flex; align-items:center;">
+                    ${actionBtnHtml}
+                </div>
+            `;
+            connectionsListContainer.appendChild(card);
+        });
+    }
+
+    window.unfollowUser = async function(targetId) {
+        if (!confirm("Bu kişiyi takipten çıkmak istediğinize emin misiniz?")) return;
+        try {
+            const req = await fetch(`/users/${currentUserId}/unfollow/${targetId}`, { method: 'DELETE' });
+            if (req.ok) {
+                openConnectionsList(currentConnectionType, connectionsTitle.textContent);
+                loadUserStats();
+                loadActiveChats(); 
+            }
+        } catch(e) { console.error(e); }
+    };
+
+    window.removeFollower = async function(targetId) {
+        if (!confirm("Bu takipçiyi kaldırmak istediğinize emin misiniz?")) return;
+        try {
+            const req = await fetch(`/users/${currentUserId}/remove-follower/${targetId}`, { method: 'DELETE' });
+            if (req.ok) {
+                openConnectionsList(currentConnectionType, connectionsTitle.textContent);
+                loadUserStats();
+                loadActiveChats(); 
+            }
+        } catch(e) { console.error(e); }
+    };
+
+    // Attach to Stats
+    const statFollowersContainer = document.getElementById('stat-followers')?.parentElement;
+    const statFollowingContainer = document.getElementById('stat-following')?.parentElement;
+    const statMutualContainer = document.getElementById('stat-mutual')?.parentElement;
+
+    if (statFollowersContainer) statFollowersContainer.addEventListener('click', () => openConnectionsList('followers', 'Takipçiler'));
+    if (statFollowingContainer) statFollowingContainer.addEventListener('click', () => openConnectionsList('following', 'Takip Edilenler'));
+    if (statMutualContainer) statMutualContainer.addEventListener('click', () => openConnectionsList('mutual', 'Ortak Arkadaşlar'));
 
 });

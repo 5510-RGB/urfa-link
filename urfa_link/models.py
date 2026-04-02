@@ -39,12 +39,14 @@ class MatchResult(BaseModel):
     similarity_score: float
     distance_km: float
     profile_image: str | None = None
+    daily_status: str | None = None
 
 class ProfileUpdateRequest(BaseModel):
     name: str | None = None
     district: str | None = None
     education: str | None = None
     bio: str | None = None
+    daily_status: str | None = None
 
 class SwipeRequest(BaseModel):
     target_id: str

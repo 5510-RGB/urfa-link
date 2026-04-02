@@ -22,12 +22,14 @@ body {
     font-family: 'Outfit', sans-serif;
     background-color: var(--bg-color);
     color: var(--text-primary);
-    min-height: 100vh;
+    min-height: 100dvh;
     overflow-x: hidden;
     display: flex;
     justify-content: center;
     align-items: center;
     position: relative;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
 }
 
 /* Animated Background Shapes */
@@ -402,7 +404,7 @@ textarea {
     }
 
     .app-container {
-        height: 100vh;
+        height: 100dvh;
         width: 100vw;
         border-radius: 0;
         border: none;
@@ -480,7 +482,7 @@ textarea {
 .app-container {
     width: 100%;
     max-width: 500px;
-    height: 90vh;
+    height: 90dvh;
     /* Mimic mobile aspect ratio height */
     max-height: 900px;
     background: var(--bg-color);

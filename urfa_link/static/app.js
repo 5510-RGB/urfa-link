@@ -246,14 +246,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 const watchStoryBtn = hasStory ? `<button onclick="window.viewStory('${match.story_image}', '${match.matched_user_name}', '${avatarUrl}')" style="margin-top: 5px; background: linear-gradient(45deg, #f09433, #bc1888); color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; width:100%;">📸 Hikayeyi İzle</button>` : '';
 
                 marker.bindPopup(`
-                    <div style="text-align:center; min-width:120px;">
-                        <strong>${match.matched_user_name}</strong><br>
-                        ${statusBubble}
-                        ${watchStoryBtn}
-                        <div style="margin-top:5px; font-size:0.8rem;">%${(match.similarity_score * 100).toFixed(0)} Uyum</div>
-                        <button onclick="window.openChat('${match.matched_user_id}', '${match.matched_user_name}')" style="margin-top: 5px; background: var(--primary-color); color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; width:100%;">Mesaj Gönder</button>
+                    <div style="text-align:center; min-width:160px; padding: 10px 5px; font-family: 'Outfit', sans-serif;">
+                        <div style="font-size: 1.1rem; font-weight: 700; color: #fff; margin-bottom: 8px; letter-spacing: 0.5px;">${match.matched_user_name}</div>
+                        ${statusBubble ? `<div style="background: rgba(57, 211, 83, 0.15); color: #39d353; font-size: 0.8rem; padding: 6px 12px; border-radius: 20px; margin-bottom: 12px; border: 1px solid rgba(57, 211, 83, 0.3); display: inline-block;">${statusBubble}</div>` : ''}
+                        <div style="margin-bottom: 12px;">
+                            ${watchStoryBtn}
+                        </div>
+                        <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 5px;">
+                             <span>📍</span> ${(match.distance_km).toFixed(1)} km uzakta • %${(match.similarity_score * 100).toFixed(0)} Uyum
+                        </div>
+                        <button onclick="window.openChat('${match.matched_user_id}', '${match.matched_user_name}')" 
+                                style="width: 100%; background: var(--primary-color); color: white; border: none; padding: 10px; border-radius: 12px; cursor: pointer; font-weight: 600; box-shadow: 0 4px 15px rgba(255, 61, 0, 0.3); transition: all 0.3s ease;">
+                            Mesaj Gönder
+                        </button>
                     </div>
-                `);
+                `, { className: 'custom-leaflet-popup' });
                 markers.push(marker);
             });
         }
@@ -307,13 +314,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 const watchStoryBtn = hasStory ? `<button onclick="window.viewStory('${myStory}', '${myName}', '${myAvatar}')" style="margin-top: 5px; background: linear-gradient(45deg, #f09433, #bc1888); color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; width:100%;">📸 Hikayemi İzle</button>` : '';
 
                 myMarker.bindPopup(`
-                    <div style="text-align:center; min-width:120px;">
-                        <strong>${myName} (Siz)</strong><br>
-                        ${statusBubble}
-                        ${watchStoryBtn}
-                        <div style="margin-top:5px; font-size:0.8rem; color:var(--primary-color);">Kendi konumunuzdasınız.</div>
+                    <div style="text-align:center; min-width:160px; padding: 10px 5px; font-family: 'Outfit', sans-serif;">
+                        <div style="font-size: 1.1rem; font-weight: 700; color: var(--accent-glow); margin-bottom: 8px; letter-spacing: 0.5px;">${myName} <span style="font-size: 0.8rem; font-weight: 400; color: #fff; opacity: 0.7;">(Siz)</span></div>
+                        ${myStatus ? `<div style="background: rgba(57, 211, 83, 0.15); color: #39d353; font-size: 0.8rem; padding: 6px 12px; border-radius: 20px; margin-bottom: 12px; border: 1px solid rgba(57, 211, 83, 0.3); display: inline-block;">💬 ${myStatus}</div>` : ''}
+                        <div style="margin-bottom: 12px;">
+                            ${watchStoryBtn}
+                        </div>
+                        <div style="font-size: 0.8rem; color: var(--text-secondary); padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.1);">
+                            ✨ Kendi konumunuzdasınız
+                        </div>
                     </div>
-                `);
+                `, { className: 'custom-leaflet-popup' });
                 myMarker.openPopup();
                 markers.push(myMarker);
             }

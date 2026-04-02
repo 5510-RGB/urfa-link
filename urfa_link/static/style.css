@@ -275,6 +275,33 @@ textarea {
     100% { width: 100%; }
 }
 
+/* Leaflet Popup Customization */
+.custom-leaflet-popup .leaflet-popup-content-wrapper {
+    background: rgba(18, 18, 18, 0.9) !important;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    color: #fff;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+.custom-leaflet-popup .leaflet-popup-tip {
+    background: rgba(18, 18, 18, 0.9) !important;
+}
+
+.custom-leaflet-popup .leaflet-popup-content {
+    margin: 12px;
+}
+
+button:active {
+    transform: scale(0.95);
+}
+
+.btn-primary:hover {
+    filter: brightness(1.1);
+    box-shadow: 0 0 20px rgba(255, 61, 0, 0.4);
+}
+
 .hidden {
     display: none !important;
 }

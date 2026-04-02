@@ -484,7 +484,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const res = await req.json();
 
                 // Update Image
-                profileAvatarImg.src = res.profile_image + '?t=' + new Date().getTime();
+                profileAvatarImg.src = res.profile_image;
                 window.currentUserAvatar = profileAvatarImg.src;
                 alert("Profil fotoğrafınız başarıyla güncellendi!");
 

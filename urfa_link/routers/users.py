@@ -218,28 +218,21 @@ async def upload_profile_image(user_id: str, file: UploadFile = File(...), db: S
     if not user:
         raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
 
-    # Ensure uploads directory exists
-    upload_dir = os.path.join("static", "uploads")
-    os.makedirs(upload_dir, exist_ok=True)
-
-    # Generate a unique filename using UUID to prevent overwrites
-    file_extension = file.filename.split('.')[-1] if '.' in file.filename else 'jpg'
-    unique_filename = f"{user_id}_{uuid.uuid4().hex[:8]}.{file_extension}"
-    file_path = os.path.join(upload_dir, unique_filename)
-
-    # Save file
+    # Read file and convert to Base64 for persistence
     try:
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
+        import base64
+        file_content = await file.read()
+        # Optional: Add basic validation/compression here if needed
+        base64_data = base64.b64encode(file_content).decode('utf-8')
+        mime_type = file.content_type or 'image/jpeg'
+        db_file_path = f"data:{mime_type};base64,{base64_data}"
+        
+        user.profile_image = db_file_path
+        db.commit()
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Dosya kaydedilemedi: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Görsel işlenemedi: {str(e)}")
 
-    # Update DB
-    db_file_path = f"/static/uploads/{unique_filename}"
-    user.profile_image = db_file_path
-    db.commit()
-
-    return {"message": "Profil fotoğrafı güncellendi", "profile_image": db_file_path}
+    return {"message": "Profil fotoğrafı başarıyla güncellendi (Kalıcı)", "profile_image": db_file_path}
     
 @router.post("/{user_id}/upload-story")
 async def upload_story(user_id: str, file: UploadFile = File(...), db: Session = Depends(get_db)):
@@ -247,25 +240,20 @@ async def upload_story(user_id: str, file: UploadFile = File(...), db: Session =
     if not user:
         raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
 
-    upload_dir = os.path.join("static", "uploads", "stories")
-    os.makedirs(upload_dir, exist_ok=True)
-
-    file_extension = file.filename.split('.')[-1] if '.' in file.filename else 'jpg'
-    unique_filename = f"story_{user_id}_{uuid.uuid4().hex[:8]}.{file_extension}"
-    file_path = os.path.join(upload_dir, unique_filename)
-
     try:
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
+        import base64
+        file_content = await file.read()
+        base64_data = base64.b64encode(file_content).decode('utf-8')
+        mime_type = file.content_type or 'image/jpeg'
+        db_file_path = f"data:{mime_type};base64,{base64_data}"
+        
+        user.story_image = db_file_path
+        user.story_updated_at = datetime.utcnow()
+        db.commit()
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Dosya kaydedilemedi: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Hikaye işlenemedi: {str(e)}")
 
-    db_file_path = f"/static/uploads/stories/{unique_filename}"
-    user.story_image = db_file_path
-    user.story_updated_at = datetime.utcnow()
-    db.commit()
-
-    return {"message": "Hikaye başarıyla paylaşıldı!", "story_image": db_file_path}
+    return {"message": "Hikaye başarıyla paylaşıldı! (Kalıcı)", "story_image": db_file_path}
 
 @router.put("/{user_id}/profile")
 async def update_profile(user_id: str, request: ProfileUpdateRequest, db: Session = Depends(get_db)):

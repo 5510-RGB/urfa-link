@@ -86,7 +86,10 @@ async def login_user(request: LoginRequest, db: Session = Depends(get_db)):
     if not user:
         raise HTTPException(status_code=400, detail="Geçersiz Telefon Numarası veya Şifre")
         
-    if not pwd_context.verify(request.password, user.hashed_password):
+    try:
+        if not pwd_context.verify(request.password[:72], user.hashed_password):
+            raise ValueError()
+    except Exception:
         raise HTTPException(status_code=400, detail="Geçersiz Telefon Numarası veya Şifre")
 
     # If user has email, send OTP
@@ -506,16 +509,41 @@ async def get_icebreaker(user_id: str, target_id: str, db: Session = Depends(get
     if not user or not target:
         raise HTTPException(status_code=404, detail="User not found")
         
+    import random
+    fallbacks = [
+        "Selam! Profiline baktım da ortak noktalarımız var gibi, tanışalım mı? 😊",
+        "Merhaba! Biyografin çok ilgimi çekti, bugün nasılsın? ✨",
+        "Selam! Seninle konuşmak keyifli olabilir diye düşündüm, ne dersin? 👋",
+        "Hey! Fotoğrafların ve bio'un harika görünüyor, tanışmak ister misin? 🌸"
+    ]
+    
     try:
         from services.ai_bio_analyzer import model
         if model:
-            prompt = f"Şu iki kişinin biyografisini oku.\nKişi 1 (Gönderen): {user.bio}\nKişi 2 (Alıcı): {target.bio}\nBu iki kişinin ortak ilgi alanlarını veya ilginç bir konuyu baz alarak, Gönderenin Alıcıya yazabileceği eğlenceli ve sıcak bir ilk tanışma mesajı (icebreaker) öner. Sadece mesajı yaz, açıklama yapma."
+            # Handle empty bios gracefully
+            sender_bio = user.bio if user.bio and len(user.bio.strip()) > 2 else "Belirtilmemiş (Genel bir mesaj öner)"
+            target_bio = target.bio if target.bio and len(target.bio.strip()) > 2 else "Belirtilmemiş (Genel bir mesaj öner)"
+            
+            prompt = (
+                f"Sistem: Urfa-Link Arkadaşlık Uygulaması Buzkıran Asistanı.\n"
+                f"Görev: Aşağıdaki iki kişinin profillerini incele ve ilk tanışma mesajı öner.\n\n"
+                f"Kişi 1 (Gönderen): {sender_bio}\n"
+                f"Kişi 2 (Alıcı): {target_bio}\n\n"
+                f"Talimat: Karşıdakini etkileyici, sıcak ve doğal bir mesaj yaz. "
+                f"Cevabında sadece ÖNERİLEN MESAJI ver. Başka hiçbir açıklama yapma. "
+                f"Eğer biyografiler çok kısaysa samimi bir selamlaşma öner."
+            )
             response = model.generate_content(prompt)
-            return {"suggestion": response.text.replace('`','').strip()}
+            # Basic cleaning
+            suggested = response.text.replace('`','').strip()
+            if len(suggested) < 5: # If AI returns empty or too short
+                 return {"suggestion": random.choice(fallbacks)}
+            return {"suggestion": suggested}
         else:
-            return {"suggestion": "Selam! Biyografinde yazdıkların çok ilgimi çekti, tanışalım mı?"}
+            return {"suggestion": random.choice(fallbacks)}
     except Exception as e:
-        return {"suggestion": "Selam, naber?"}
+        print(f"!!! ICEBREAKER ERROR: {e}")
+        return {"suggestion": random.choice(fallbacks)}
 
 @router.delete("/{user_id}", status_code=status.HTTP_200_OK)
 async def delete_user(user_id: str, db: Session = Depends(get_db)):

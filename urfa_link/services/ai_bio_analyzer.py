@@ -10,7 +10,8 @@ API_KEY = os.environ.get("GEMINI_API_KEY", "MOCK_KEY")
 
 if API_KEY != "MOCK_KEY" and API_KEY != "":
     genai.configure(api_key=API_KEY)
-    model = genai.GenerativeModel('gemini-1.5-pro')
+    # Using 'gemini-1.5-flash' for better response times and availability
+    model = genai.GenerativeModel('gemini-1.5-flash')
 else:
     model = None
 
@@ -37,6 +38,8 @@ class AIBioAnalyzer:
             if isinstance(numbers, list) and len(numbers) >= 5:
                 return [float(x) for x in numbers[:5]]
         except Exception as e:
-            print(f"Error in Gemini AI: {e}")
+            print(f"!!! GEMINI AI ERROR (analyze_bio): {e}")
+            if "quota" in str(e).lower():
+                print("Quota exceeded - please check Gemini API bill or limits.")
             
         return [0.5, 0.5, 0.5, 0.5, 0.5] # Default fallback vector

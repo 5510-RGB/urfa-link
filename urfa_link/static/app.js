@@ -1334,10 +1334,15 @@ document.addEventListener('DOMContentLoaded', () => {
         users.forEach(u => {
             const avatar = u.profile_image || `https://i.pravatar.cc/100?u=${u.id}`;
             const card = document.createElement('div');
-            card.className = 'match-card'; // Reuse existing glass styles
+            card.className = 'match-card'; // Reuse outer borders/bg
             card.setAttribute('data-name', u.name);
-            card.style.height = '70px';
+            card.style.height = '80px';
             card.style.display = 'flex';
+            card.style.flexDirection = 'row';
+            card.style.alignItems = 'center';
+            card.style.justifyContent = 'flex-start';
+            card.style.padding = '0 10px';
+            card.style.marginBottom = '10px';
 
             let actionBtnHtml = '';
             if (type === 'following' || type === 'mutual') {
@@ -1347,11 +1352,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             card.innerHTML = `
-                <img src="${avatar}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; margin: 10px;">
+                <img src="${avatar}" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; margin-right: 15px; border: 2px solid var(--panel-border);">
                 <div style="flex: 1; display:flex; flex-direction:column; justify-content:center;">
-                    <h4 style="margin: 0; font-size: 1rem;">${u.name}</h4>
+                    <h4 style="margin: 0; font-size: 1.1rem; color: #fff;">${u.name}</h4>
+                    <span style="font-size: 0.8rem; color: var(--text-secondary);">Urfa-Link Kullanıcısı</span>
                 </div>
-                <div style="padding: 10px; display:flex; align-items:center;">
+                <div style="display:flex; align-items:center; gap: 10px;">
                     ${actionBtnHtml}
                 </div>
             `;

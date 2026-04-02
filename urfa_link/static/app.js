@@ -78,6 +78,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const avatarUpload = document.getElementById('avatarUpload');
     const profileAvatarImg = document.getElementById('profile-avatar-img');
     const editProfileBtn = document.getElementById('editProfileBtn');
+    const settingsBtn = document.getElementById('settingsBtn');
+    const settingsOverlay = document.getElementById('settings-overlay');
+    const closeSettingsBtn = document.getElementById('closeSettingsBtn');
+    const locateMeBtnSettings = document.getElementById('locateMeBtnSettings');
 
     // Edit Profile Modal Elements
     const editProfileOverlay = document.getElementById('edit-profile-overlay');
@@ -125,10 +129,15 @@ document.addEventListener('DOMContentLoaded', () => {
              updateStatusUI(userData.daily_status);
         }
         
-        // Finalize Story
         if (userData && userData.story_image) {
             window.currentUserStory = userData.story_image;
         }
+
+        // Auto-Location Start
+        setTimeout(() => {
+            updateMyLocation(); // One manual run to set view
+            startAutoGps();     // Then watch in background
+        }, 1000);
 
         // Handle Profile Image if returned on login/register
         if (userData && userData.profile_image) {
@@ -267,71 +276,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Geolocation API
-    async function updateMyLocation() {
-        if (!navigator.geolocation) {
-            alert('Tarayıcınız Konum özelliğini desteklemiyor.');
-            return;
-        }
+    async function updateMyLocation(silent = false) {
+        if (!navigator.geolocation || !currentUserId) return;
 
-        const btn = document.getElementById('locateMeBtn');
-        const originalText = btn.innerText;
-        btn.innerText = 'Konum Bulunuyor...';
-        btn.disabled = true;
+        const btn = document.getElementById('locateMeBtnSettings');
+        const originalText = btn ? btn.innerText : '';
+        if (btn && !silent) {
+            btn.innerText = 'Konum Bulunuyor...';
+            btn.disabled = true;
+        }
 
         navigator.geolocation.getCurrentPosition(async (position) => {
             const lat = position.coords.latitude;
             const lng = position.coords.longitude;
-            console.log("GPS Konumu:", lat, lng);
-
-            // Update Map View
-            if (map) {
-                map.setView([lat, lng], 13);
-
-                // Add a special marker for ME (using profile info)
-                const myAvatar = window.currentUserAvatar || 'https://i.pravatar.cc/100';
-                const myName = profileName.textContent || 'Siz';
-                const myStatus = document.getElementById('profile-status-text').textContent;
-                const myStory = window.currentUserStory || null; // Will need to update this on story upload
-                
-                const hasStory = !!myStory;
-                const ringClass = hasStory ? 'story-ring' : '';
-
-                const myIcon = L.divIcon({
-                    className: 'custom-map-marker',
-                    html: `
-                        <div class="${ringClass}" style="width: 46px; height: 46px; display:flex; align-items:center; justify-content:center;">
-                            <div style="width: 40px; height: 40px; border-radius: 50%; overflow: hidden; border: 2px solid #000;">
-                                <img src="${myAvatar}" style="width: 100%; height: 100%; object-fit: cover;">
-                            </div>
-                        </div>
-                    `,
-                    iconSize: [46, 46],
-                    iconAnchor: [23, 23]
-                });
-
-                const myMarker = L.marker([lat, lng], { icon: myIcon }).addTo(map);
-                const statusBubble = myStatus ? `<div style="background:var(--accent-glow);color:#000;font-size:0.7rem;padding:3px 8px;border-radius:10px;margin:5px 0;">💬 ${myStatus}</div>` : '';
-                const watchStoryBtn = hasStory ? `<button onclick="window.viewStory('${myStory}', '${myName}', '${myAvatar}')" style="margin-top: 5px; background: linear-gradient(45deg, #f09433, #bc1888); color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; width:100%;">📸 Hikayemi İzle</button>` : '';
-
-                myMarker.bindPopup(`
-                    <div style="text-align:center; min-width:160px; padding: 10px 5px; font-family: 'Outfit', sans-serif;">
-                        <div style="font-size: 1.1rem; font-weight: 700; color: var(--accent-glow); margin-bottom: 8px; letter-spacing: 0.5px;">${myName} <span style="font-size: 0.8rem; font-weight: 400; color: #fff; opacity: 0.7;">(Siz)</span></div>
-                        ${myStatus ? `<div style="background: rgba(57, 211, 83, 0.15); color: #39d353; font-size: 0.8rem; padding: 6px 12px; border-radius: 20px; margin-bottom: 12px; border: 1px solid rgba(57, 211, 83, 0.3); display: inline-block;">💬 ${myStatus}</div>` : ''}
-                        <div style="margin-bottom: 12px;">
-                            ${watchStoryBtn}
-                        </div>
-                        <div style="font-size: 0.8rem; color: var(--text-secondary); padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.1);">
-                            ✨ Kendi konumunuzdasınız
-                        </div>
-                    </div>
-                `, { className: 'custom-leaflet-popup' });
-                myMarker.openPopup();
-                markers.push(myMarker);
-            }
-
-            // Sync with backend
+            
             try {
-                const req = await fetch('/users/update-location', {
+                await fetch('/users/update-location', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -340,22 +300,59 @@ document.addEventListener('DOMContentLoaded', () => {
                         longitude: lng
                     })
                 });
-                if (req.ok) {
-                    alert('Konumunuz başarıyla güncellendi!');
-                }
+                if (window.showToast && !silent) window.showToast('Konum güncellendi');
             } catch (e) {
                 console.error('Konum güncellenemedi:', e);
-            } finally {
+            }
+
+            if (map) {
+                map.setView([lat, lng], 13);
+                loadMatches();
+            }
+            
+            if (btn && !silent) {
                 btn.innerText = originalText;
                 btn.disabled = false;
             }
-
         }, (error) => {
             console.error('Konum hatası:', error);
-            alert('Konum alınamadı: ' + error.message + '\nLütfen tarayıcı izinlerini kontrol edin veya GPS\'i açın.');
-            btn.innerText = originalText;
-            btn.disabled = false;
+            if (btn && !silent) {
+                btn.innerText = originalText;
+                btn.disabled = false;
+            }
         }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
+    }
+
+    // === Background Auto-GPS Logic ===
+    let gpsWatcher = null;
+    function startAutoGps() {
+        if (!navigator.geolocation || !currentUserId) return;
+        
+        console.log("Auto-GPS Başlatıldı.");
+        if (gpsWatcher) navigator.geolocation.clearWatch(gpsWatcher);
+        
+        gpsWatcher = navigator.geolocation.watchPosition(async (pos) => {
+            const lat = pos.coords.latitude;
+            const lng = pos.coords.longitude;
+            
+            try {
+                await fetch('/users/update-location', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: currentUserId,
+                        latitude: lat,
+                        longitude: lng
+                    })
+                });
+                console.log("Auto-GPS: Konum güncellendi.");
+                if (map) loadMatches();
+            } catch (err) { console.error("Auto-GPS update failed", err); }
+        }, (err) => console.error("GPS Watch Error:", err), {
+            enableHighAccuracy: true,
+            maximumAge: 60000,
+            timeout: 27000
+        });
     }
 
     // Helper: Logout
@@ -539,9 +536,47 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.error(err);
                 alert("Hikaye yüklenirken bir hata oluştu: " + err.message);
             } finally {
-                addStoryBtn.innerText = "📸 Hikaye Paylaş";
+                addStoryBtn.innerText = "📸 Hikaye";
                 addStoryBtn.disabled = false;
                 storyUpload.value = "";
+            }
+        });
+    }
+
+    // === Settings Modal Logic ===
+    if (settingsBtn) {
+        settingsBtn.addEventListener('click', () => {
+            settingsOverlay.classList.remove('hidden');
+        });
+    }
+
+    if (closeSettingsBtn) {
+        closeSettingsBtn.addEventListener('click', () => {
+            settingsOverlay.classList.add('hidden');
+        });
+    }
+
+    if (locateMeBtnSettings) {
+        locateMeBtnSettings.addEventListener('click', () => {
+            updateMyLocation();
+            settingsOverlay.classList.add('hidden');
+        });
+    }
+
+    if (deleteAccountBtn) {
+        deleteAccountBtn.addEventListener('click', async () => {
+            if (!confirm("HESAP SİLME: Tüm verileriniz, mesajlarınız ve fotoğraflarınız KALICI olarak silinecek. Emin misiniz?")) return;
+            const secondConfirm = confirm("Son bir kez soruyoruz, bu işlemin geri dönüşü yok. Devam edilsin mi?");
+            if (!secondConfirm) return;
+
+            try {
+                const req = await fetch(`/users/${currentUserId}`, { method: 'DELETE' });
+                if (req.ok) {
+                    alert("Hesabınız silindi. Sizi özleyeceğiz...");
+                    logout();
+                }
+            } catch (err) {
+                console.error("Account deletion failed", err);
             }
         });
     }

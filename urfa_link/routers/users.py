@@ -322,12 +322,21 @@ async def get_matches(user_id: str, db: Session = Depends(get_db)):
     blocked_records = db.query(BlockDB).filter((BlockDB.blocker_id == user_id) | (BlockDB.blocked_id == user_id)).all()
     blocked_user_ids = {b.blocked_id if b.blocker_id == user_id else b.blocker_id for b in blocked_records}
 
+    # Get explicitly followed (liked) users to show them on map even if not matching 75%
+    liked_records = db.query(MatchActionDB.target_id).filter(MatchActionDB.actor_id == user.id, MatchActionDB.action == 'like').all()
+    liked_user_ids = {r[0] for r in liked_records}
+
     for other_user in all_users:
         if other_user.id == user.id:
             continue
             
-        # Hide users we've already taken an action on or blocked
-        if other_user.id in swiped_user_ids or other_user.id in blocked_user_ids:
+        # Hide users we've blocked (but NOT those we've swiped if they are followed)
+        if other_user.id in blocked_user_ids:
+            continue
+            
+        # If not followed, hide users we've already taken an action on (to maintain Discovery tab)
+        is_liked = other_user.id in liked_user_ids
+        if other_user.id in swiped_user_ids and not is_liked:
             continue
             
         # 1. Filter by 20km radius using AG-GeoIndex
@@ -337,9 +346,11 @@ async def get_matches(user_id: str, db: Session = Depends(get_db)):
         )
         
         if distance <= 20.0:
-            # 2. Filter by 75% similarity in Interest-Vector (Hobby-Match)
+            # Check if this is a followed user OR a high-similarity match
+            is_followed = other_user.id in liked_user_ids
             similarity = graph_db.calculate_similarity(user.interest_vector, other_user.interest_vector)
-            if similarity >= 0.75:
+            
+            if is_followed or similarity >= 0.75:
                 from datetime import timedelta
                 ds = None
                 if other_user.daily_status and other_user.status_updated_at:

@@ -40,6 +40,7 @@ class MatchResult(BaseModel):
     distance_km: float
     profile_image: str | None = None
     daily_status: str | None = None
+    story_image: str | None = None
 
 class ProfileUpdateRequest(BaseModel):
     name: str | None = None

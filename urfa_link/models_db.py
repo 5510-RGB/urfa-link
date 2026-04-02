@@ -29,6 +29,8 @@ class UserDB(Base):
     # New features
     daily_status = Column(String, nullable=True)
     status_updated_at = Column(DateTime, nullable=True)
+    story_image = Column(String, nullable=True)
+    story_updated_at = Column(DateTime, nullable=True)
     last_seen = Column(DateTime, default=datetime.utcnow)
 
 class MessageDB(Base):

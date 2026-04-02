@@ -117,7 +117,8 @@ async def login_user(request: LoginRequest, db: Session = Depends(get_db)):
         "education": user.education,
         "profile_image": user.profile_image,
         "is_admin": user.is_admin,
-        "daily_status": user.daily_status
+        "daily_status": user.daily_status,
+        "story_image": user.story_image if user.story_image and user.story_updated_at and (datetime.utcnow() - user.story_updated_at).total_seconds() < 86400 else None
     }
 
 @router.post("/verify-login-otp")
@@ -147,7 +148,8 @@ async def verify_login_otp(request: LoginVerifyRequest, db: Session = Depends(ge
         "education": user.education,
         "profile_image": user.profile_image,
         "is_admin": user.is_admin,
-        "daily_status": user.daily_status
+        "daily_status": user.daily_status,
+        "story_image": user.story_image if user.story_image and user.story_updated_at and (datetime.utcnow() - user.story_updated_at).total_seconds() < 86400 else None
     }
 
 class ForgotPasswordRequest(BaseModel):
@@ -238,6 +240,32 @@ async def upload_profile_image(user_id: str, file: UploadFile = File(...), db: S
     db.commit()
 
     return {"message": "Profil fotoğrafı güncellendi", "profile_image": db_file_path}
+    
+@router.post("/{user_id}/upload-story")
+async def upload_story(user_id: str, file: UploadFile = File(...), db: Session = Depends(get_db)):
+    user = db.query(UserDB).filter(UserDB.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
+
+    upload_dir = os.path.join("static", "uploads", "stories")
+    os.makedirs(upload_dir, exist_ok=True)
+
+    file_extension = file.filename.split('.')[-1] if '.' in file.filename else 'jpg'
+    unique_filename = f"story_{user_id}_{uuid.uuid4().hex[:8]}.{file_extension}"
+    file_path = os.path.join(upload_dir, unique_filename)
+
+    try:
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Dosya kaydedilemedi: {str(e)}")
+
+    db_file_path = f"/static/uploads/stories/{unique_filename}"
+    user.story_image = db_file_path
+    user.story_updated_at = datetime.utcnow()
+    db.commit()
+
+    return {"message": "Hikaye başarıyla paylaşıldı!", "story_image": db_file_path}
 
 @router.put("/{user_id}/profile")
 async def update_profile(user_id: str, request: ProfileUpdateRequest, db: Session = Depends(get_db)):
@@ -312,12 +340,16 @@ async def get_matches(user_id: str, db: Session = Depends(get_db)):
             # 2. Filter by 75% similarity in Interest-Vector (Hobby-Match)
             similarity = graph_db.calculate_similarity(user.interest_vector, other_user.interest_vector)
             if similarity >= 0.75:
-                # Check status expiration (24h)
-                ds = None
                 from datetime import timedelta
+                ds = None
                 if other_user.daily_status and other_user.status_updated_at:
                     if datetime.utcnow() - other_user.status_updated_at < timedelta(hours=24):
                         ds = other_user.daily_status
+                
+                si = None
+                if other_user.story_image and other_user.story_updated_at:
+                    if datetime.utcnow() - other_user.story_updated_at < timedelta(hours=24):
+                        si = other_user.story_image
 
                 match = MatchResult(
                     matched_user_id=other_user.id,
@@ -325,7 +357,8 @@ async def get_matches(user_id: str, db: Session = Depends(get_db)):
                     similarity_score=similarity,
                     distance_km=distance,
                     profile_image=other_user.profile_image,
-                    daily_status=ds
+                    daily_status=ds,
+                    story_image=si
                 )
                 matches.append(match)
                 

@@ -23,6 +23,8 @@ def run_migrations():
                 "ALTER TABLE users ADD COLUMN IF NOT EXISTS daily_status VARCHAR",
                 "ALTER TABLE users ADD COLUMN IF NOT EXISTS status_updated_at TIMESTAMP",
                 "ALTER TABLE users ADD COLUMN IF NOT EXISTS last_seen TIMESTAMP",
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS story_image VARCHAR",
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS story_updated_at TIMESTAMP",
                 "ALTER TABLE messages ADD COLUMN IF NOT EXISTS is_read BOOLEAN DEFAULT FALSE",
                 "ALTER TABLE messages ADD COLUMN IF NOT EXISTS read_at TIMESTAMP",
             ]

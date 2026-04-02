@@ -218,23 +218,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const avatarUrl = match.profile_image ? match.profile_image : `https://i.pravatar.cc/100?u=${match.matched_user_id}`;
 
-                // Custom Icon with Profile Picture
+                // Custom Icon with Profile Picture + Story Ring if exists
+                const hasStory = !!match.story_image;
+                const ringClass = hasStory ? 'story-ring' : '';
+                
                 const customIcon = L.divIcon({
                     className: 'custom-map-marker',
-                    html: `<div style="width: 40px; height: 40px; border-radius: 50%; overflow: hidden; border: 2px solid var(--primary-color); box-shadow: 0 0 10px rgba(0,0,0,0.5);"><img src="${avatarUrl}" style="width: 100%; height: 100%; object-fit: cover;"></div>`,
-                    iconSize: [40, 40],
-                    iconAnchor: [20, 20]
+                    html: `
+                        <div class="${ringClass}" style="width: 46px; height: 46px; display:flex; align-items:center; justify-content:center;">
+                            <div style="width: 40px; height: 40px; border-radius: 50%; overflow: hidden; border: 2px solid #000;">
+                                <img src="${avatarUrl}" style="width: 100%; height: 100%; object-fit: cover;">
+                            </div>
+                        </div>
+                    `,
+                    iconSize: [46, 46],
+                    iconAnchor: [23, 23]
                 });
 
                 const marker = L.marker([lat, lng], { icon: customIcon }).addTo(map);
                 const statusBubble = match.daily_status ? `<div style="background:var(--accent-glow);color:#000;font-size:0.7rem;padding:3px 8px;border-radius:10px;margin:5px 0;">💬 ${match.daily_status}</div>` : '';
+                
+                const watchStoryBtn = hasStory ? `<button onclick="window.viewStory('${match.story_image}', '${match.matched_user_name}', '${avatarUrl}')" style="margin-top: 5px; background: linear-gradient(45deg, #f09433, #bc1888); color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; width:100%;">📸 Hikayeyi İzle</button>` : '';
 
                 marker.bindPopup(`
-                    <div style="text-align:center;">
+                    <div style="text-align:center; min-width:120px;">
                         <strong>${match.matched_user_name}</strong><br>
                         ${statusBubble}
-                        %${(match.similarity_score * 100).toFixed(0)} Uyum<br>
-                        <button onclick="window.openChat('${match.matched_user_id}', '${match.matched_user_name}')" style="margin-top: 5px; background: var(--primary-color); color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer;">Sohbet Et</button>
+                        ${watchStoryBtn}
+                        <div style="margin-top:5px; font-size:0.8rem;">%${(match.similarity_score * 100).toFixed(0)} Uyum</div>
+                        <button onclick="window.openChat('${match.matched_user_id}', '${match.matched_user_name}')" style="margin-top: 5px; background: var(--primary-color); color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; width:100%;">Mesaj Gönder</button>
                     </div>
                 `);
                 markers.push(marker);
@@ -443,6 +455,48 @@ document.addEventListener('DOMContentLoaded', () => {
                 avatarUploadContainer.style.opacity = '1';
                 // Reset input so the same file can be chosen again if needed
                 avatarUpload.value = "";
+            }
+        });
+    }
+
+    // Story Upload Logic
+    const addStoryBtn = document.getElementById('addStoryBtn');
+    const storyUpload = document.getElementById('storyUpload');
+
+    if (addStoryBtn && storyUpload) {
+        addStoryBtn.addEventListener('click', () => {
+            storyUpload.click();
+        });
+
+        storyUpload.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file || !currentUserId) return;
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            addStoryBtn.innerText = "⏳ Yükleniyor...";
+            addStoryBtn.disabled = true;
+
+            try {
+                const req = await fetch(`/users/${currentUserId}/upload-story`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!req.ok) throw new Error("Yükleme başarısız.");
+                const res = await req.json();
+
+                alert("Hikayeniz başarıyla paylaşıldı! Haritada renkli halka ile görünecek.");
+                loadMatches(); // Refresh map to show story ring
+
+            } catch (err) {
+                console.error(err);
+                alert("Hikaye yüklenirken bir hata oluştu: " + err.message);
+            } finally {
+                addStoryBtn.innerText = "📸 Hikaye Paylaş";
+                addStoryBtn.disabled = false;
+                storyUpload.value = "";
             }
         });
     }
@@ -1422,6 +1476,46 @@ document.addEventListener('DOMContentLoaded', () => {
             container.classList.add('hidden');
             text.textContent = "";
         }
+    }
+
+    // Story Viewer Logic
+    let storyTimer = null;
+    window.viewStory = function(imgUrl, name, avatar) {
+        const viewer = document.getElementById('story-viewer');
+        const viewerImg = document.getElementById('story-viewer-img');
+        const viewerName = document.getElementById('story-viewer-name');
+        const viewerAvatar = document.getElementById('story-viewer-avatar');
+        const progress = document.getElementById('story-progress');
+
+        viewerName.textContent = name;
+        viewerAvatar.src = avatar;
+        viewerImg.src = imgUrl;
+        viewer.classList.remove('hidden');
+        
+        // Start progress bar
+        progress.style.transition = 'none';
+        progress.style.width = '0%';
+        setTimeout(() => {
+            progress.style.transition = 'width 5s linear';
+            progress.style.width = '100%';
+        }, 10);
+
+        // Auto close after 5s
+        if (storyTimer) clearTimeout(storyTimer);
+        storyTimer = setTimeout(() => {
+            closeStory();
+        }, 5000);
+    };
+
+    function closeStory() {
+        const viewer = document.getElementById('story-viewer');
+        if (viewer) viewer.classList.add('hidden');
+        if (storyTimer) clearTimeout(storyTimer);
+    }
+
+    const closeStoryBtn = document.getElementById('closeStoryBtn');
+    if (closeStoryBtn) {
+        closeStoryBtn.addEventListener('click', closeStory);
     }
 
 });

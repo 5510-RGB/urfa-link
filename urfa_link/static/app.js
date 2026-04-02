@@ -119,6 +119,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // Setup Profile Tab
         if (userData && userData.name) profileName.textContent = userData.name;
         if (userData && userData.bio) profileBio.textContent = userData.bio;
+        
+        // Sync status
+        if (userData && userData.daily_status !== undefined) {
+             updateStatusUI(userData.daily_status);
+        }
 
         // Handle Profile Image if returned on login/register
         if (userData && userData.profile_image) {
@@ -259,7 +264,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 map.setView([lat, lng], 13);
 
                 // Add a special marker for ME
-                L.marker([lat, lng]).addTo(map).bindPopup("<b>Siz Buradasınız</b>").openPopup();
+                const myMarker = L.marker([lat, lng]).addTo(map).bindPopup("<b>Siz Buradasınız</b>");
+                const myStatus = document.getElementById('profile-status-text').textContent;
+                if (myStatus) {
+                    myMarker.setPopupContent(`<b>Siz Buradasınız</b><br><div style="background:var(--accent-glow);color:#000;font-size:0.7rem;padding:3px 8px;border-radius:10px;margin-top:5px;">💬 ${myStatus}</div>`);
+                }
+                myMarker.openPopup();
+                markers.push(myMarker);
             }
 
             // Sync with backend
@@ -441,9 +452,12 @@ document.addEventListener('DOMContentLoaded', () => {
         editProfileBtn.addEventListener('click', () => {
             // Populate inputs with current UI data
             document.getElementById('edit_name').value = profileName.textContent || "";
-            // Check if profileBio has the placeholder text before prefilling
             const bioText = profileBio.textContent;
             document.getElementById('edit_bio').value = bioText === "Biyografi yükleniyor..." ? "" : bioText;
+            
+            // Populate Daily Status
+            const statusText = document.getElementById('profile-status-text').textContent;
+            document.getElementById('edit_status').value = statusText;
 
             editProfileOverlay.classList.remove('hidden');
         });
@@ -485,6 +499,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Update UI visually
                 profileName.textContent = res.name;
                 profileBio.textContent = res.bio;
+                updateStatusUI(res.daily_status);
 
                 alert("Profiliniz başarıyla güncellendi!");
                 editProfileOverlay.classList.add('hidden');
@@ -741,7 +756,8 @@ document.addEventListener('DOMContentLoaded', () => {
             district: loginRes.district,
             education: loginRes.education,
             profile_image: loginRes.profile_image,
-            is_admin: loginRes.is_admin
+            is_admin: loginRes.is_admin,
+            daily_status: loginRes.daily_status
         };
 
         // Reset login form state
@@ -1396,6 +1412,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (statFollowersContainer) statFollowersContainer.addEventListener('click', () => openConnectionsList('followers', 'Takipçiler'));
     if (statFollowingContainer) statFollowingContainer.addEventListener('click', () => openConnectionsList('following', 'Takip Edilenler'));
-    if (statMutualContainer) statMutualContainer.addEventListener('click', () => openConnectionsList('mutual', 'Ortak Arkadaşlar'));
+    function updateStatusUI(status) {
+        const container = document.getElementById('profile-status-container');
+        const text = document.getElementById('profile-status-text');
+        if (status && status.trim() !== "") {
+            container.classList.remove('hidden');
+            text.textContent = status;
+        } else {
+            container.classList.add('hidden');
+            text.textContent = "";
+        }
+    }
 
 });

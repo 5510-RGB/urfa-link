@@ -116,7 +116,8 @@ async def login_user(request: LoginRequest, db: Session = Depends(get_db)):
         "district": user.district,
         "education": user.education,
         "profile_image": user.profile_image,
-        "is_admin": user.is_admin
+        "is_admin": user.is_admin,
+        "daily_status": user.daily_status
     }
 
 @router.post("/verify-login-otp")
@@ -145,7 +146,8 @@ async def verify_login_otp(request: LoginVerifyRequest, db: Session = Depends(ge
         "district": user.district,
         "education": user.education,
         "profile_image": user.profile_image,
-        "is_admin": user.is_admin
+        "is_admin": user.is_admin,
+        "daily_status": user.daily_status
     }
 
 class ForgotPasswordRequest(BaseModel):

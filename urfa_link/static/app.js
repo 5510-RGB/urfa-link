@@ -951,7 +951,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             sender_id: data.sender_id 
                         }));
                     }
-                    renderChatMessage(data.content, 'received', data.message_id, data.sender_image);
+                    renderChatMessage(data.content, 'received', data.message_id, null, data.sender_image);
                 } else {
                     const preview = data.content.startsWith('[IMAGE]:') ? '📷 Bir fotoğraf gönderdi' : data.content;
 
@@ -1005,7 +1005,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const history = await req.json();
                 history.forEach(msg => {
                     const type = msg.sender_id === currentUserId ? 'sent' : 'received';
-                    renderChatMessage(msg.content, type, msg.timestamp);
+                    renderChatMessage(msg.content, type, msg.id, msg.timestamp);
                 });
             }
         } catch (err) {
@@ -1031,7 +1031,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // Render single message bubble
-    function renderChatMessage(content, type, timeStr = null, senderAvatar = null) {
+    function renderChatMessage(content, type, msgId = null, timeStr = null, senderAvatar = null) {
         const wrapper = document.createElement('div');
         wrapper.className = `message-wrapper ${type}`;
 
@@ -1170,12 +1170,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function renderChatMessage(content, type, msgId = null, isRead = false) {
-        // Find existing definition at line 1035 and overwrite signature
-        // We will just patch sendMessage below to pass msgId
-    }
-    // Note: JS doesn't complain if we redefine but this part is just for context
-        
     // Send Message Event
     async function sendMessage() {
         const text = chatInput.value.trim();

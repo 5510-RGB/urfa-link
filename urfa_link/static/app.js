@@ -182,7 +182,7 @@ document.addEventListener('DOMContentLoaded', () => {
         loadActiveChats(); // Load Chats for the Message tab
         initWebSocket();
         loadUserStats(); // Fetch follower stats
-        initMap(matchData);
+        loadMapLocations();
 
         // Phase 14: Request Push Notification Permissions
         if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
@@ -377,6 +377,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (map) {
                 map.setView([lat, lng], 13);
                 loadMatches();
+                loadMapLocations();
             }
             
             if (btn && !silent) {
@@ -418,7 +419,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     })
                 });
                 console.log("Auto-GPS: Konum güncellendi.");
-                if (map) loadMatches();
+                if (map) {
+                    loadMatches();
+                    loadMapLocations();
+                }
             } catch (err) { console.error("Auto-GPS update failed", err); }
         }, (err) => console.error("GPS Watch Error:", err), {
             enableHighAccuracy: true,
@@ -1673,10 +1677,22 @@ document.addEventListener('DOMContentLoaded', () => {
             if (req.ok) {
                 const matchData = await req.json();
                 renderMatches(matchData);
-                initMap(matchData);
             }
         } catch (err) {
             console.error("Match yüklenemedi:", err);
+        }
+    }
+
+    async function loadMapLocations() {
+        if (!currentUserId) return;
+        try {
+            const req = await fetch(`/users/${currentUserId}/map-locations`);
+            if (req.ok) {
+                const mapData = await req.json();
+                initMap(mapData);
+            }
+        } catch (err) {
+            console.error("Map locations yüklenemedi:", err);
         }
     }
 

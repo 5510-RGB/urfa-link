@@ -366,6 +366,63 @@ async def get_matches(user_id: str, db: Session = Depends(get_db)):
     matches.sort(key=lambda x: x.similarity_score, reverse=True)
     return matches
 
+@router.get("/{user_id}/map-locations", response_model=List[MatchResult])
+async def get_map_locations(user_id: str, db: Session = Depends(get_db)):
+    user = graph_db.get_user(db, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+        
+    all_users = graph_db.get_all_users(db)
+
+    locations = []
+    
+    # Get blocked users (either we blocked them or they blocked us)
+    from models_db import BlockDB
+    blocked_records = db.query(BlockDB).filter((BlockDB.blocker_id == user_id) | (BlockDB.blocked_id == user_id)).all()
+    blocked_user_ids = {b.blocked_id if b.blocker_id == user_id else b.blocker_id for b in blocked_records}
+
+    for other_user in all_users:
+        if other_user.id == user.id:
+            continue
+            
+        # Hide users we've blocked
+        if other_user.id in blocked_user_ids:
+            continue
+            
+        # 1. Expand radius to 50km for Snap Map logic
+        distance = GeoIndex.calculate_distance(
+            user.latitude, user.longitude,
+            other_user.latitude, other_user.longitude
+        )
+        
+        if distance <= 50.0:
+            # We don't filter out by similarity or swiped history. Everyone shows.
+            similarity = graph_db.calculate_similarity(user.interest_vector, other_user.interest_vector)
+            
+            from datetime import timedelta
+            ds = None
+            if other_user.daily_status and other_user.status_updated_at:
+                if datetime.utcnow() - other_user.status_updated_at < timedelta(hours=24):
+                    ds = other_user.daily_status
+            
+            si = None
+            if other_user.story_image and other_user.story_updated_at:
+                if datetime.utcnow() - other_user.story_updated_at < timedelta(hours=24):
+                    si = other_user.story_image
+
+            location_result = MatchResult(
+                matched_user_id=other_user.id,
+                matched_user_name=other_user.name,
+                similarity_score=similarity,
+                distance_km=distance,
+                profile_image=other_user.profile_image,
+                daily_status=ds,
+                story_image=si
+            )
+            locations.append(location_result)
+                
+    return locations
+
 @router.post("/{user_id}/swipe")
 async def process_swipe(user_id: str, request: SwipeRequest, db: Session = Depends(get_db)):
     user = db.query(UserDB).filter(UserDB.id == user_id).first()

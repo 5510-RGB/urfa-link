@@ -1264,7 +1264,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // Format time
         let timeLabel = '';
         if (timeStr) {
-            // Fix UTC timezone issue from backend if string lacks 'Z'
             let parseStr = timeStr;
             if (!parseStr.endsWith('Z') && !parseStr.includes('+')) {
                 parseStr += 'Z';
@@ -1274,15 +1273,6 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             const now = new Date();
             timeLabel = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        }
-
-        let displayContent = content;
-        if (content.startsWith('[IMAGE]:')) {
-            const imgUrl = content.substring(8); // Remove '[IMAGE]:'
-            displayContent = `<img src="${imgUrl}" class="chat-image-attachment" alt="Image attachment" onclick="window.open('${imgUrl}', '_blank')">`;
-        } else if (content.startsWith('[ONETIMEIMAGE]:')) {
-            const imgUrl = content.substring(15);
-            displayContent = `<div class="one-time-image-container" onclick="this.innerHTML='<img src=&quot;${imgUrl}&quot; style=&quot;max-width:200px; border-radius:10px;&quot;>'; setTimeout(() => {this.innerHTML='<div style=&quot;color:var(--error-color); padding:10px;&quot;>📸 Fotoğraf silindi</div>';}, 5000);" style="cursor:pointer; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; text-align: center; border: 1px dashed var(--accent-glow);"><span style="font-size: 2rem;">🖼️</span><p style="margin-top: 5px; font-size: 0.8rem; color: var(--accent-glow);">Tek Gösterimlik Fotoğraf<br>(Açmak için tıkla)</p></div>`;
         }
 
         let avatarToUse = senderAvatar;
@@ -1295,17 +1285,74 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const msgIdHtml = msgId ? `id="tick-${msgId}"` : ``;
+        const senderLabel = type === 'sent' ? '<div style="font-size: 0.7rem; color: #8b949e; margin-bottom: 3px;">Siz</div>' : `<div style="font-size: 0.7rem; color: var(--accent-glow); margin-bottom: 3px;">${chatPeerName.textContent}</div>`;
+        const ticksHtml = type === 'sent' ? `<span ${msgIdHtml} style="font-size: 10px; font-weight: bold; color: #8b949e; margin-left: 5px;">✓✓</span>` : '';
+
         wrapper.innerHTML = `
             <img src="${avatarToUse}" class="chat-bubble-avatar" alt="Avatar">
             <div class="message message-${type}">
-                ${type === 'sent' ? '<div style="font-size: 0.7rem; color: #8b949e; margin-bottom: 3px;">Siz</div>' : `<div style="font-size: 0.7rem; color: var(--accent-glow); margin-bottom: 3px;">${chatPeerName.textContent}</div>`}
-                ${displayContent}
+                ${senderLabel}
+                <div class="msg-content-container"></div>
                 <div class="msg-info">
                     <span class="msg-time">${timeLabel}</span>
-                    ${type === 'sent' ? `<span ${msgIdHtml} style="font-size: 10px; font-weight: bold; color: #8b949e; margin-left: 5px;">✓✓</span>` : ''}
+                    ${ticksHtml}
                 </div>
             </div>
         `;
+
+        const contentContainer = wrapper.querySelector('.msg-content-container');
+
+        if (content.startsWith('[IMAGE]:')) {
+            const imgUrl = content.substring(8);
+            const imgEl = document.createElement('img');
+            imgEl.src = imgUrl;
+            imgEl.className = 'chat-image-attachment';
+            imgEl.alt = 'Gönderilen Fotoğraf';
+            imgEl.onclick = () => {
+                const viewer = document.getElementById('story-viewer');
+                const viewerImg = document.getElementById('story-viewer-img');
+                const progress = document.getElementById('story-progress');
+                
+                if (viewer && viewerImg) {
+                    document.getElementById('story-viewer-name').textContent = "Fotoğraf";
+                    document.getElementById('story-viewer-avatar').src = avatarToUse;
+                    viewerImg.src = imgUrl;
+                    viewer.classList.remove('hidden');
+                    
+                    if (progress) progress.style.width = '0%'; // Hide time progress bar
+                    if (storyTimer) {
+                        clearTimeout(storyTimer);
+                        storyTimer = null;
+                    }
+                }
+            };
+            contentContainer.appendChild(imgEl);
+            
+        } else if (content.startsWith('[ONETIMEIMAGE]:')) {
+            const imgUrl = content.substring(15);
+            const divEl = document.createElement('div');
+            divEl.className = 'one-time-image-container';
+            divEl.style = "cursor:pointer; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; text-align: center; border: 1px dashed var(--accent-glow);";
+            divEl.innerHTML = `<span style="font-size: 2rem;">🖼️</span><p style="margin-top: 5px; font-size: 0.8rem; color: var(--accent-glow);">Tek Gösterimlik Fotoğraf<br>(Açmak için tıkla)</p>`;
+            
+            divEl.onclick = () => {
+                divEl.onclick = null;
+                divEl.innerHTML = '';
+                const innerImg = document.createElement('img');
+                innerImg.src = imgUrl;
+                innerImg.style = "max-width:200px; border-radius:10px;";
+                divEl.appendChild(innerImg);
+                
+                setTimeout(() => {
+                    divEl.innerHTML = `<div style="color:var(--error-color); padding:10px;">📸 Fotoğraf silindi</div>`;
+                }, 5000);
+            };
+            contentContainer.appendChild(divEl);
+            
+        } else {
+            contentContainer.textContent = content; // Safe text
+        }
+
         chatMessagesContainer.appendChild(wrapper);
         chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
     }

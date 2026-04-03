@@ -252,6 +252,38 @@ document.addEventListener('DOMContentLoaded', () => {
         markers.forEach(marker => map.removeLayer(marker));
         markers = [];
 
+        // Add Self Pin
+        if (window.currentUserLat && window.currentUserLng) {
+            const myLat = window.currentUserLat;
+            const myLng = window.currentUserLng;
+            const avatarUrl = window.currentUserAvatar || `https://i.pravatar.cc/100?u=${currentUserId}`;
+            
+            const hasStory = !!window.currentUserStory;
+            const ringClass = hasStory ? 'story-ring' : '';
+            
+            const selfIcon = L.divIcon({
+                className: 'custom-map-marker self-marker',
+                html: `
+                    <div class="${ringClass}" style="width: 46px; height: 46px; display:flex; align-items:center; justify-content:center; border: 2px solid var(--primary-color); border-radius: 50%; box-shadow: 0 0 10px rgba(255, 61, 0, 0.5); background: #000;">
+                        <div style="width: 40px; height: 40px; border-radius: 50%; overflow: hidden; border: 2px solid #000;">
+                            <img src="${avatarUrl}" style="width: 100%; height: 100%; object-fit: cover;">
+                        </div>
+                    </div>
+                `,
+                iconSize: [46, 46],
+                iconAnchor: [23, 23]
+            });
+            
+            const selfMarker = L.marker([myLat, myLng], { icon: selfIcon }).addTo(map);
+            selfMarker.bindPopup(`
+                <div style="text-align:center; min-width:120px; padding: 10px 5px; font-family: 'Outfit', sans-serif;">
+                    <div style="font-size: 1.1rem; font-weight: 700; color: #fff; margin-bottom: 5px; letter-spacing: 0.5px;">Ben</div>
+                    <div style="font-size: 0.85rem; color: var(--text-secondary);">Şu anki konumunuz</div>
+                </div>
+            `, { className: 'custom-leaflet-popup' });
+            markers.push(selfMarker);
+        }
+
         // Add pins for matches
         if (matchData && matchData.length > 0) {
             // For simulation: Generate slight random offset for matches since we don't return their exact lat/lng in MatchResult yet
@@ -324,6 +356,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const lat = position.coords.latitude;
             const lng = position.coords.longitude;
             
+            window.currentUserLat = lat;
+            window.currentUserLng = lng;
+            
             try {
                 await fetch('/users/update-location', {
                     method: 'POST',
@@ -368,6 +403,9 @@ document.addEventListener('DOMContentLoaded', () => {
         gpsWatcher = navigator.geolocation.watchPosition(async (pos) => {
             const lat = pos.coords.latitude;
             const lng = pos.coords.longitude;
+            
+            window.currentUserLat = lat;
+            window.currentUserLng = lng;
             
             try {
                 await fetch('/users/update-location', {

@@ -82,6 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const settingsOverlay = document.getElementById('settings-overlay');
     const closeSettingsBtn = document.getElementById('closeSettingsBtn');
     const locateMeBtnSettings = document.getElementById('locateMeBtnSettings');
+    const deleteAccountBtn = document.getElementById('deleteAccountBtn');
 
     // Edit Profile Modal Elements
     const editProfileOverlay = document.getElementById('edit-profile-overlay');
@@ -605,6 +606,15 @@ document.addEventListener('DOMContentLoaded', () => {
         locateMeBtnSettings.addEventListener('click', () => {
             updateMyLocation();
             settingsOverlay.classList.add('hidden');
+        });
+    }
+
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', () => {
+            if (confirm("Çıkış yapmak istediğinize emin misiniz?")) {
+                logout();
+                settingsOverlay.classList.add('hidden');
+            }
         });
     }
 

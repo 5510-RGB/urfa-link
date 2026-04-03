@@ -635,12 +635,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if (settingsBtn) {
         settingsBtn.addEventListener('click', () => {
             settingsOverlay.classList.remove('hidden');
+            window.pushModalState();
         });
     }
 
     if (closeSettingsBtn) {
         closeSettingsBtn.addEventListener('click', () => {
-            settingsOverlay.classList.add('hidden');
+            if (!window.popModalState()) {
+                settingsOverlay.classList.add('hidden');
+            }
         });
     }
 
@@ -691,10 +694,13 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('edit_status').value = statusText;
 
             editProfileOverlay.classList.remove('hidden');
+            window.pushModalState();
         });
 
         closeEditProfileBtn.addEventListener('click', () => {
-            editProfileOverlay.classList.add('hidden');
+            if (!window.popModalState()) {
+                editProfileOverlay.classList.add('hidden');
+            }
         });
 
         editProfileForm.addEventListener('submit', async (e) => {
@@ -1223,6 +1229,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Show Overlay
         chatOverlay.classList.remove('hidden');
+        window.pushModalState();
 
         // Fetch History
         try {
@@ -1471,8 +1478,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     closeChatBtn.addEventListener('click', () => {
-        chatOverlay.classList.add('hidden');
-        currentChatPeerId = null;
+        if (!window.popModalState()) {
+            chatOverlay.classList.add('hidden');
+            currentChatPeerId = null;
+        }
     });
 
     // Notification Bell Click Event
@@ -1558,7 +1567,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (closeConnectionsBtn) {
         closeConnectionsBtn.addEventListener('click', () => {
-            connectionsOverlay.classList.add('hidden');
+            if (!window.popModalState()) {
+                connectionsOverlay.classList.add('hidden');
+            }
         });
     }
 
@@ -1584,6 +1595,7 @@ document.addEventListener('DOMContentLoaded', () => {
         connectionsListContainer.innerHTML = '<div style="text-align:center; padding: 20px;">Yükleniyor...</div>';
         connectionsSearch.value = '';
         connectionsOverlay.classList.remove('hidden');
+        window.pushModalState();
 
         try {
             const req = await fetch(`/users/${currentUserId}/connections/${type}`);
@@ -1694,6 +1706,7 @@ document.addEventListener('DOMContentLoaded', () => {
         viewerAvatar.src = avatar;
         viewerImg.src = imgUrl;
         viewer.classList.remove('hidden');
+        window.pushModalState();
         
         // Start progress bar
         progress.style.transition = 'none';
@@ -1714,6 +1727,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const viewer = document.getElementById('story-viewer');
         if (viewer) viewer.classList.add('hidden');
         if (storyTimer) clearTimeout(storyTimer);
+    }
+    
+    if (closeStoryBtn) {
+        closeStoryBtn.addEventListener('click', () => {
+            if (!window.popModalState()) {
+                closeStory();
+            }
+        });
     }
 
     const closeStoryBtn = document.getElementById('closeStoryBtn');
@@ -1742,5 +1763,56 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error("Map locations yüklenemedi:", err);
         }
     }
+
+    // === Hardware Back Button / HTML5 History Support ===
+    window.modalStack = 0;
+    window.pushModalState = function() {
+        history.pushState({ modal: true }, '');
+        window.modalStack++;
+    };
+
+    window.addEventListener('popstate', (e) => {
+        if (window.modalStack > 0) {
+            window.modalStack--;
+        }
+        
+        const storyViewer = document.getElementById('story-viewer');
+        if (storyViewer && !storyViewer.classList.contains('hidden')) {
+            closeStory();
+            return;
+        }
+        
+        if (chatOverlay && !chatOverlay.classList.contains('hidden')) {
+            chatOverlay.classList.add('hidden');
+            currentChatPeerId = null;
+            return;
+        }
+        
+        const connectionsOverlay = document.getElementById('connections-overlay');
+        if (connectionsOverlay && !connectionsOverlay.classList.contains('hidden')) {
+            connectionsOverlay.classList.add('hidden');
+            return;
+        }
+
+        const settingsOverlay = document.getElementById('settingsOverlay');
+        if (settingsOverlay && !settingsOverlay.classList.contains('hidden')) {
+            settingsOverlay.classList.add('hidden');
+            return;
+        }
+
+        const editProfileOverlay = document.getElementById('edit-profile-overlay');
+        if (editProfileOverlay && !editProfileOverlay.classList.contains('hidden')) {
+            editProfileOverlay.classList.add('hidden');
+            return;
+        }
+    });
+
+    window.popModalState = function() {
+        if (window.modalStack > 0) {
+            history.back(); // let popstate handler hide the overlay
+            return true;
+        }
+        return false;
+    };
 
 });

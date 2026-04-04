@@ -105,6 +105,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // Messages Tab Elements
     const messagesTabContainer = document.getElementById('tab-messages');
 
+    // Story and Preview Elements
+    const storyViewer = document.getElementById('story-viewer');
+    const closeStoryBtn = document.getElementById('closeStoryBtn');
+    const previewActions = document.getElementById('preview-actions');
+    const confirmSendBtn = document.getElementById('confirmSendBtn');
+    const cancelPreviewBtn = document.getElementById('cancelPreviewBtn');
+
     // === CRITICAL: AUTH VIEW SWITCHING (Must be first and guarded) ===
     const switchAuthView = (hideView, showView) => {
         if (!hideView || !showView) return;
@@ -274,11 +281,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 iconAnchor: [23, 23]
             });
             
+            const watchMyStoryBtn = hasStory ? `<button onclick="window.viewStory('${window.currentUserStory}', 'Ben', '${avatarUrl}')" style="margin-top: 5px; background: linear-gradient(45deg, #f09433, #bc1888); color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; width:100%;">📸 Hikayemi İzle</button>` : '';
+
             const selfMarker = L.marker([myLat, myLng], { icon: selfIcon }).addTo(map);
             selfMarker.bindPopup(`
                 <div style="text-align:center; min-width:120px; padding: 10px 5px; font-family: 'Outfit', sans-serif;">
                     <div style="font-size: 1.1rem; font-weight: 700; color: #fff; margin-bottom: 5px; letter-spacing: 0.5px;">Ben</div>
-                    <div style="font-size: 0.85rem; color: var(--text-secondary);">Şu anki konumunuz</div>
+                    <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 5px;">Şu anki konumunuz</div>
+                    ${watchMyStoryBtn}
                 </div>
             `, { className: 'custom-leaflet-popup' });
             markers.push(selfMarker);
@@ -597,37 +607,37 @@ document.addEventListener('DOMContentLoaded', () => {
             storyUpload.click();
         });
 
-        storyUpload.addEventListener('change', async (e) => {
+        storyUpload.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (!file || !currentUserId) return;
+            
+            showPhotoPreview(file, async () => {
+                const formData = new FormData();
+                formData.append('file', file);
 
-            const formData = new FormData();
-            formData.append('file', file);
+                addStoryBtn.innerText = "⏳ Yükleniyor...";
+                addStoryBtn.disabled = true;
 
-            addStoryBtn.innerText = "⏳ Yükleniyor...";
-            addStoryBtn.disabled = true;
+                try {
+                    const req = await fetch(`/users/${currentUserId}/upload-story`, {
+                        method: 'POST',
+                        body: formData
+                    });
 
-            try {
-                const req = await fetch(`/users/${currentUserId}/upload-story`, {
-                    method: 'POST',
-                    body: formData
-                });
+                    if (!req.ok) throw new Error("Yükleme başarısız.");
+                    const res = await req.json();
 
-                if (!req.ok) throw new Error("Yükleme başarısız.");
-                const res = await req.json();
-
-                window.currentUserStory = res.story_image; // Cache for self-marker
-                alert("Hikayeniz başarıyla paylaşıldı! Haritada renkli halka ile görünecek.");
-                loadMatches(); // Refresh map to show story ring
-
-            } catch (err) {
-                console.error(err);
-                alert("Hikaye yüklenirken bir hata oluştu: " + err.message);
-            } finally {
-                addStoryBtn.innerText = "📸 Hikaye";
-                addStoryBtn.disabled = false;
-                storyUpload.value = "";
-            }
+                    window.currentUserStory = res.story_image;
+                    alert("Hikayeniz başarıyla paylaşıldı!");
+                    loadMatches();
+                } catch (err) {
+                    alert("Hata: " + err.message);
+                } finally {
+                    addStoryBtn.innerText = "📸 Hikaye";
+                    addStoryBtn.disabled = false;
+                    storyUpload.value = "";
+                }
+            });
         });
     }
 
@@ -1317,9 +1327,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     document.getElementById('story-viewer-name').textContent = "Fotoğraf";
                     document.getElementById('story-viewer-avatar').src = avatarToUse;
                     viewerImg.src = imgUrl;
+                    
+                    // Hide preview buttons
+                    if (previewActions) previewActions.classList.add('hidden');
+                    
                     viewer.classList.remove('hidden');
                     
-                    if (progress) progress.style.width = '0%'; // Hide time progress bar
+                    if (progress) {
+                        progress.style.transition = 'none';
+                        progress.style.width = '0%'; 
+                    }
                     if (storyTimer) {
                         clearTimeout(storyTimer);
                         storyTimer = null;
@@ -1364,38 +1381,37 @@ document.addEventListener('DOMContentLoaded', () => {
             chatImageUpload.click();
         });
 
-        chatImageUpload.addEventListener('change', async (e) => {
+        chatImageUpload.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (!file || !currentUserId || !currentChatPeerId) return;
 
-            const formData = new FormData();
-            formData.append('file', file);
+            showPhotoPreview(file, async () => {
+                const formData = new FormData();
+                formData.append('file', file);
 
-            // Visual feedback
-            const originalIcon = attachImageBtn.innerText;
-            attachImageBtn.innerText = "⏳";
-            attachImageBtn.disabled = true;
+                attachImageBtn.innerText = "⏳";
+                attachImageBtn.disabled = true;
 
-            try {
-                const req = await fetch(`/messages/${currentUserId}/${currentChatPeerId}/upload-image`, {
-                    method: 'POST',
-                    body: formData
-                });
+                try {
+                    const req = await fetch(`/messages/${currentUserId}/${currentChatPeerId}/upload-image`, {
+                        method: 'POST',
+                        body: formData
+                    });
 
-                if (req.ok) {
-                    const res = await req.json();
-                    renderChatMessage(res.content, 'sent', res.message_id);
-                } else {
-                    console.error("Fotoğraf yüklenemedi.");
-                    alert("Fotoğraf gönderilirken bir hata oluştu.");
+                    if (req.ok) {
+                        const res = await req.json();
+                        renderChatMessage(res.content, 'sent', res.message_id);
+                    } else {
+                        alert("Fotoğraf gönderilemedi.");
+                    }
+                } catch (err) {
+                    console.error(err);
+                } finally {
+                    attachImageBtn.innerText = "📎";
+                    attachImageBtn.disabled = false;
+                    chatImageUpload.value = '';
                 }
-            } catch (err) {
-                console.error("Hata:", err);
-            } finally {
-                attachImageBtn.innerText = originalIcon;
-                attachImageBtn.disabled = false;
-                chatImageUpload.value = ''; // Reset
-            }
+            });
         });
     }
 
@@ -1409,37 +1425,37 @@ document.addEventListener('DOMContentLoaded', () => {
             chatCameraUpload.click();
         });
 
-        chatCameraUpload.addEventListener('change', async (e) => {
+        chatCameraUpload.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (!file || !currentUserId || !currentChatPeerId) return;
 
-            const formData = new FormData();
-            formData.append('file', file);
+            showPhotoPreview(file, async () => {
+                const formData = new FormData();
+                formData.append('file', file);
 
-            const originalIcon = cameraImageBtn.innerText;
-            cameraImageBtn.innerText = "⏳";
-            cameraImageBtn.disabled = true;
+                cameraImageBtn.innerText = "⏳";
+                cameraImageBtn.disabled = true;
 
-            try {
-                const req = await fetch(`/messages/${currentUserId}/${currentChatPeerId}/upload-image?is_one_time=true`, {
-                    method: 'POST',
-                    body: formData
-                });
+                try {
+                    const req = await fetch(`/messages/${currentUserId}/${currentChatPeerId}/upload-image?is_one_time=true`, {
+                        method: 'POST',
+                        body: formData
+                    });
 
-                if (req.ok) {
-                    const res = await req.json();
-                    renderChatMessage(res.content, 'sent', res.message_id);
-                } else {
-                    console.error("Fotoğraf yüklenemedi.");
-                    alert("Fotoğraf gönderilirken bir hata oluştu.");
+                    if (req.ok) {
+                        const res = await req.json();
+                        renderChatMessage(res.content, 'sent', res.message_id);
+                    } else {
+                        alert("Fotoğraf gönderilemedi.");
+                    }
+                } catch (err) {
+                    console.error(err);
+                } finally {
+                    cameraImageBtn.innerText = "📸";
+                    cameraImageBtn.disabled = false;
+                    chatCameraUpload.value = '';
                 }
-            } catch (err) {
-                console.error("Hata:", err);
-            } finally {
-                cameraImageBtn.innerText = originalIcon;
-                cameraImageBtn.disabled = false;
-                chatCameraUpload.value = ''; // Reset
-            }
+            });
         });
     }
 
@@ -1681,6 +1697,41 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Photo Preview Helper
+    function showPhotoPreview(file, onConfirm) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const viewer = document.getElementById('story-viewer');
+            const viewerImg = document.getElementById('story-viewer-img');
+            const viewerName = document.getElementById('story-viewer-name');
+            const progress = document.getElementById('story-progress');
+            
+            viewerName.textContent = "Önizleme";
+            viewerImg.src = e.target.result;
+            
+            // Show preview actions
+            if (previewActions) previewActions.classList.remove('hidden');
+            
+            // Hide progress bar
+            if (progress) {
+                progress.style.transition = 'none';
+                progress.style.width = '0%';
+            }
+            
+            viewer.classList.remove('hidden');
+            
+            // Set up actions
+            confirmSendBtn.onclick = () => {
+                closeStory();
+                onConfirm();
+            };
+            cancelPreviewBtn.onclick = () => {
+                closeStory();
+            };
+        };
+        reader.readAsDataURL(file);
+    }
+
     // Story Viewer Logic
     let storyTimer = null;
     window.viewStory = function(imgUrl, name, avatar) {
@@ -1691,8 +1742,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const progress = document.getElementById('story-progress');
 
         viewerName.textContent = name;
-        viewerAvatar.src = avatar;
+        viewerAvatar.src = avatar || `https://i.pravatar.cc/100?u=default`;
         viewerImg.src = imgUrl;
+        
+        // Hide preview buttons
+        if (previewActions) previewActions.classList.add('hidden');
+        
         viewer.classList.remove('hidden');
         
         // Start progress bar
@@ -1713,7 +1768,15 @@ document.addEventListener('DOMContentLoaded', () => {
     function closeStory() {
         const viewer = document.getElementById('story-viewer');
         if (viewer) viewer.classList.add('hidden');
-        if (storyTimer) clearTimeout(storyTimer);
+        if (storyTimer) {
+            clearTimeout(storyTimer);
+            storyTimer = null;
+        }
+        const progress = document.getElementById('story-progress');
+        if (progress) {
+            progress.style.transition = 'none';
+            progress.style.width = '0%';
+        }
     }
     
     if (closeStoryBtn) {
@@ -1721,8 +1784,6 @@ document.addEventListener('DOMContentLoaded', () => {
             closeStory();
         });
     }
-
-    const closeStoryBtn = document.getElementById('closeStoryBtn');
     async function loadMatches() {
         if (!currentUserId) return;
         try {
@@ -1769,9 +1830,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 connectionsOverlay.classList.add('hidden');
                 return;
             }
-            const settingsOverlay = document.getElementById('settingsOverlay');
-            if (settingsOverlay && !settingsOverlay.classList.contains('hidden')) {
-                settingsOverlay.classList.add('hidden');
+            const settingsOverlayEl = document.getElementById('settings-overlay');
+            if (settingsOverlayEl && !settingsOverlayEl.classList.contains('hidden')) {
+                settingsOverlayEl.classList.add('hidden');
                 return;
             }
             const editProfileOverlay = document.getElementById('edit-profile-overlay');

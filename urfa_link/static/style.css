@@ -971,3 +971,39 @@ button:active {
 .btn-danger:hover {
     background: darkred;
 }
+
+/* Photo Preview Actions */
+#preview-actions {
+    backdrop-filter: blur(8px);
+    background: rgba(0, 0, 0, 0.4);
+    padding: 20px 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+}
+
+#preview-actions .btn-primary:hover {
+    box-shadow: 0 0 25px rgba(255, 61, 0, 0.6);
+    transform: scale(1.05);
+}
+
+#preview-actions .btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.05);
+}
+
+@media (max-width: 480px) {
+    #preview-actions {
+        gap: 15px;
+        padding: 15px;
+    }
+    #preview-actions button {
+        flex: 1;
+        padding: 12px 10px !important;
+        font-size: 0.9rem;
+    }
+}

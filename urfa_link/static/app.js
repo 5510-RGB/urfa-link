@@ -352,8 +352,30 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Geolocation API
+    // Geolocation Helper
+    async function processLocationUpdate(lat, lng, silent) {
+        window.currentUserLat = lat;
+        window.currentUserLng = lng;
+        try {
+            await fetch('/users/update-location', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id: currentUserId, latitude: lat, longitude: lng })
+            });
+            if (window.showToast && !silent) window.showToast('Konum güncellendi');
+        } catch (e) {
+            console.error('Konum güncellenemedi:', e);
+        }
+        if (map) {
+            map.setView([lat, lng], 13);
+            loadMatches();
+            loadMapLocations();
+        }
+    }
+
+    // Geolocation API
     async function updateMyLocation(silent = false) {
-        if (!navigator.geolocation || !currentUserId) return;
+        if (!currentUserId) return;
 
         const btn = document.getElementById('locateMeBtnSettings');
         const originalText = btn ? btn.innerText : '';
@@ -362,83 +384,74 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.disabled = true;
         }
 
-        navigator.geolocation.getCurrentPosition(async (position) => {
-            const lat = position.coords.latitude;
-            const lng = position.coords.longitude;
-            
-            window.currentUserLat = lat;
-            window.currentUserLng = lng;
-            
-            try {
-                await fetch('/users/update-location', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        user_id: currentUserId,
-                        latitude: lat,
-                        longitude: lng
-                    })
-                });
-                if (window.showToast && !silent) window.showToast('Konum güncellendi');
-            } catch (e) {
-                console.error('Konum güncellenemedi:', e);
+        try {
+            if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Geolocation) {
+                const { Geolocation } = window.Capacitor.Plugins;
+                const perm = await Geolocation.checkPermissions();
+                if (perm.location !== 'granted') {
+                    const req = await Geolocation.requestPermissions();
+                    if (req.location !== 'granted') throw new Error("Location permission denied");
+                }
+                const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: true });
+                await processLocationUpdate(pos.coords.latitude, pos.coords.longitude, silent);
+            } else if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(async (pos) => {
+                    await processLocationUpdate(pos.coords.latitude, pos.coords.longitude, silent);
+                }, (error) => {
+                    console.error('Konum hatası:', error);
+                }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
             }
-
-            if (map) {
-                map.setView([lat, lng], 13);
-                loadMatches();
-                loadMapLocations();
-            }
-            
+        } catch(e) {
+            console.error("Konum hatası:", e);
+        } finally {
             if (btn && !silent) {
                 btn.innerText = originalText;
                 btn.disabled = false;
             }
-        }, (error) => {
-            console.error('Konum hatası:', error);
-            if (btn && !silent) {
-                btn.innerText = originalText;
-                btn.disabled = false;
-            }
-        }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
+        }
     }
 
     // === Background Auto-GPS Logic ===
     let gpsWatcher = null;
-    function startAutoGps() {
-        if (!navigator.geolocation || !currentUserId) return;
-        
+    let capGpsWatcher = null;
+    async function startAutoGps() {
+        if (!currentUserId) return;
         console.log("Auto-GPS Başlatıldı.");
-        if (gpsWatcher) navigator.geolocation.clearWatch(gpsWatcher);
-        
-        gpsWatcher = navigator.geolocation.watchPosition(async (pos) => {
-            const lat = pos.coords.latitude;
-            const lng = pos.coords.longitude;
-            
-            window.currentUserLat = lat;
-            window.currentUserLng = lng;
-            
+
+        const watchCallback = async (pos, err) => {
+            if (err) { console.error("GPS Watch Error:", err); return; }
+            if (pos) {
+                window.currentUserLat = pos.coords.latitude;
+                window.currentUserLng = pos.coords.longitude;
+                try {
+                    await fetch('/users/update-location', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ user_id: currentUserId, latitude: pos.coords.latitude, longitude: pos.coords.longitude })
+                    });
+                    console.log("Auto-GPS: Konum güncellendi.");
+                    if (map) {
+                        loadMatches();
+                        loadMapLocations();
+                    }
+                } catch (e) { console.error("Auto-GPS update failed", e); }
+            }
+        };
+
+        if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Geolocation) {
+            const { Geolocation } = window.Capacitor.Plugins;
+            if (capGpsWatcher) await Geolocation.clearWatch({ id: capGpsWatcher });
             try {
-                await fetch('/users/update-location', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        user_id: currentUserId,
-                        latitude: lat,
-                        longitude: lng
-                    })
-                });
-                console.log("Auto-GPS: Konum güncellendi.");
-                if (map) {
-                    loadMatches();
-                    loadMapLocations();
-                }
-            } catch (err) { console.error("Auto-GPS update failed", err); }
-        }, (err) => console.error("GPS Watch Error:", err), {
-            enableHighAccuracy: true,
-            maximumAge: 60000,
-            timeout: 27000
-        });
+                capGpsWatcher = await Geolocation.watchPosition({ enableHighAccuracy: true, timeout: 27000 }, watchCallback);
+            } catch(e) { console.error("Capacitor GpsWatch Error: ", e); }
+        } else if (navigator.geolocation) {
+            if (gpsWatcher) navigator.geolocation.clearWatch(gpsWatcher);
+            gpsWatcher = navigator.geolocation.watchPosition(
+                (pos) => watchCallback(pos, null),
+                (err) => watchCallback(null, err),
+                { enableHighAccuracy: true, maximumAge: 60000, timeout: 27000 }
+            );
+        }
     }
 
     // Helper: Logout

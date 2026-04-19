@@ -1246,6 +1246,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Show Overlay
         chatOverlay.classList.remove('hidden');
+        const bNav = document.querySelector('.bottom-nav');
+        if (bNav) bNav.classList.add('hidden');
 
         // Fetch History
         try {
@@ -1501,6 +1503,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     closeChatBtn.addEventListener('click', () => {
         chatOverlay.classList.add('hidden');
+        const bNav = document.querySelector('.bottom-nav');
+        if (bNav) bNav.classList.remove('hidden');
         currentChatPeerId = null;
     });
 
@@ -1542,6 +1546,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     alert("Kullanıcı başarıyla engellendi.");
                     chatMenuDropdown.classList.add('hidden');
                     chatOverlay.classList.add('hidden');
+                    const bNav = document.querySelector('.bottom-nav');
+                    if (bNav) bNav.classList.remove('hidden');
                     currentChatPeerId = null;
                     // Refresh matches and chats
                     loadUserStats(); 
@@ -1898,6 +1904,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             if (chatOverlay && !chatOverlay.classList.contains('hidden')) {
                 chatOverlay.classList.add('hidden');
+                const bNav = document.querySelector('.bottom-nav');
+                if (bNav) bNav.classList.remove('hidden');
                 currentChatPeerId = null;
                 return;
             }

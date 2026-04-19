@@ -65,6 +65,10 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 async def get_index():
     return FileResponse("static/index.html")
 
+@app.get("/privacy-policy")
+async def get_privacy():
+    return FileResponse("static/privacy.html")
+
 @app.get("/style.css")
 async def get_style():
     return FileResponse("static/style.css")

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Urfa-Link - Gizlilik Politikası</title>
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #ff3d00;
+            text-align: center;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #222;
+            margin-top: 25px;
+        }
+        p {
+            margin-bottom: 15px;
+        }
+        ul {
+            margin-bottom: 15px;
+        }
+        .footer {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 0.9em;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Gizlilik ve Veri Güvenliği Politikası</h1>
+        <p><strong>Son Güncelleme:</strong> 19 Nisan 2026</p>
+
+        <h2>1. Giriş</h2>
+        <p>Urfa-Link ("biz", "bizim" veya "uygulama"), kullanıcılarımızın ("siz") gizliliğine ve kişisel verilerinin güvenliğine büyük önem vermektedir. İşbu Gizlilik Politikası, mobil uygulamamızı ve web sitemizi kullanırken hangi tür verilerin toplandığını, nasıl kullanıldığını, nasıl saklandığını ve kimlerle paylaşıldığını şeffaf bir şekilde açıklamaktadır. Bu politika, Google Play Store Veri Güvenliği (Data Safety) gereksinimlerine uygun olarak hazırlanmıştır.</p>
+
+        <h2>2. Hangi Verileri Topluyoruz?</h2>
+        <p>Hizmetlerimizi sunabilmek amacıyla aşağıdaki verileri toplamaktayız:</p>
+        <ul>
+            <li><strong>Kişisel Tanımlayıcı Bilgiler:</strong> Ad, soyad, e-posta adresi (OTP doğrulama için) ve telefon numarası.</li>
+            <li><strong>Profil Bilgileri:</strong> Fotoğraflarınız, biyografiniz, eğitim durumunuz ve uygulamanın kullanılabilmesi için gerekli olan diğer profil bilgileriniz.</li>
+            <li><strong>Konum Bilgileri:</strong> Yakındaki kullanıcılarla eşleşebilmeniz için cihazınızdan alınan kesin (GPS) ve yaklaşık lokasyon bilgileri.</li>
+            <li><strong>İletişim İçerikleri:</strong> Diğer kullanıcılarla uygulama içerisinde gerçekleştirdiğiniz sohbet (mesaj) geçmişiniz.</li>
+        </ul>
+
+        <h2>3. Verileri Nasıl Kullanıyoruz?</h2>
+        <p>Topladığımız veriler yegane olarak size hizmet vermek amacıyla kullanılmaktadır:</p>
+        <ul>
+            <li>Uygulama temel işlevi olan "Eşleşme" algoritmasını çalıştırmak (Konum ve Biyografi tabanlı).</li>
+            <li>Kullanıcı hesap güvenliğini OTP (Tek Kullanımlık Şifre) üzerinden sağlamak.</li>
+            <li>Uygulama içi güvenliği artırmak, sahte hesapları ve istenmeyen eylemleri (spam, taciz) engellemek.</li>
+        </ul>
+
+        <h2>4. Veri Güvenliği ve Saklama (Supabase)</h2>
+        <p>Tüm kişisel verileriniz, dünya standartlarında güvenlik altyapısına sahip <strong>Supabase</strong> servisleri kullanılarak bulut tabanlı, kalıcı ve kriptografik (şifrelenmiş) veritabanlarında saklanmaktadır. Veritabanı mimarimizde <strong>Satır Bazlı Güvenlik (Row Level Security - RLS)</strong> kuralları aktiftir. Bu sayede:</p>
+        <ul>
+            <li>Sizin mesajlarınızı yalnızca siz ve mesajlaştığınız kişi görebilir.</li>
+            <li>Profil güncelleme ve silme işlemleri yalnızca yetkili (sizin) tarafınızdan yapılabilir.</li>
+            <li>Uygulamamızdaki tüm şifreler, geri döndürülemez hash algoritmalarıyla (Bcrypt) kodlanmaktadır.</li>
+        </ul>
+
+        <h2>5. Veri Paylaşımı</h2>
+        <p>Topladığımız kişisel veriler, kanuni mecburiyetler (resmi makamlardan gelen yasal talepler) hariç olmak üzere, kesinlikle üçüncü parti reklam verenler veya dış kurumlar ile <strong>paylaşılmaz ve satılmaz.</strong></p>
+
+        <h2>6. Hesap ve Veri Silme Hakları (Unutulma Hakkı)</h2>
+        <p>Kullanıcılarımız uygulamamızdaki verileri üzerinde tam kontrole sahiptir. İstediğiniz an uygulama içindeki "Ayarlar > Hesabımı Kalıcı Olarak Sil" butonunu kullanarak hesabınızı ve aşağıdaki verileri kalıcı olarak silebilirsiniz:</p>
+        <ul>
+            <li>Tüm kişisel bilgileriniz ve medyanız.</li>
+            <li>Tüm eşleşme ve beğeni (swipe) geçmişiniz.</li>
+            <li>Tüm uyguluma içi mesajlaşma geçmişiniz.</li>
+        </ul>
+        <p>Bu silme işlemi anında gerçekleşir ve verileriniz Supabase sunucularımızdan kalıcı olarak yok edilir.</p>
+
+        <h2>7. İletişim</h2>
+        <p>Gizlilik süreçlerimiz, veri yönetimi veya destek konularında bilgi almak için aşağıdaki yollarla bize her zaman ulaşabilirsiniz:</p>
+        <p>E-posta: privacy@urfa-link.com</p>
+        
+        <div class="footer">
+            <p>&copy; 2026 Urfa-Link. Tüm hakları gizlidir.</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -65,8 +65,8 @@
                         <input type="checkbox" id="kvkk_consent" required style="width: auto; margin-right: 10px;">
                         <label for="kvkk_consent"
                             style="font-size: 0.85rem; color: var(--text-secondary); cursor: pointer;">
-                            <a href="#" style="color: var(--primary-color); text-decoration: underline;">Kullanıcı
-                                Sözleşmesi</a> ve <a href="#"
+                            <a href="#" id="termsLink" style="color: var(--primary-color); text-decoration: underline;">Kullanıcı
+                                Sözleşmesi</a> ve <a href="#" id="kvkkLink"
                                 style="color: var(--primary-color); text-decoration: underline;">KVKK Aydınlatma
                                 Metni</a>'ni okudum, onaylıyorum.
                         </label>
@@ -478,6 +478,22 @@
             <div id="preview-actions" class="hidden" style="position:absolute; bottom:30px; left:0; width:100%; display:flex; justify-content:center; gap:20px; z-index:220;">
                 <button id="cancelPreviewBtn" class="btn-secondary" style="background:rgba(255,255,255,0.1); border:1px solid #fff; color:#fff; padding:10px 30px;">Vazgeç</button>
                 <button id="confirmSendBtn" class="btn-primary" style="padding:10px 40px; font-weight:700; box-shadow:0 0 20px rgba(255, 61, 0, 0.4);">Gönder ➤</button>
+            </div>
+        </div>
+
+        <!-- Legal Text Overlay Modal -->
+        <div id="legal-overlay" class="hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 400; backdrop-filter: blur(5px); display: flex; align-items: center; justify-content: center;">
+            <div class="glass-panel" style="width: 90%; max-width: 500px; max-height: 80vh; display: flex; flex-direction: column; padding: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
+                    <h3 id="legal-title" style="margin: 0; color: #fff;">Sözleşme</h3>
+                    <button id="closeLegalBtn" style="background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer;">✕</button>
+                </div>
+                <div id="legal-content" style="overflow-y: auto; flex: 1; font-size: 0.95rem; color: var(--text-secondary); line-height: 1.6; padding-right: 10px;">
+                    <!-- Content will be injected here -->
+                </div>
+                <div style="margin-top: 15px; text-align: center;">
+                    <button id="acceptLegalBtn" class="btn-primary" style="width: 100%;">Okudum, Anladım</button>
+                </div>
             </div>
         </div>
 

@@ -797,7 +797,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Success: Switch to Step 2
                 forgotFormStep1.classList.add('hidden');
                 if (forgotFormStep2) forgotFormStep2.classList.remove('hidden');
-                if (resetSubtitle) resetSubtitle.textContent = `Doğrulama kodu ${phone} numarasına gönderildi. Lütfen kodu ve yeni şifrenizi girin.`;
+                if (resetSubtitle) resetSubtitle.textContent = `Doğrulama kodu e-posta adresinize gönderildi. Lütfen kodu ve yeni şifrenizi girin.`;
             } catch (error) {
                 alert(error.message);
             } finally {
@@ -1808,6 +1808,69 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (err) {
             console.error("Map locations yüklenemedi:", err);
         }
+    }
+
+    // === Legal Overlay Logic ===
+    const termsLink = document.getElementById('termsLink');
+    const kvkkLink = document.getElementById('kvkkLink');
+    const legalOverlay = document.getElementById('legal-overlay');
+    const closeLegalBtn = document.getElementById('closeLegalBtn');
+    const acceptLegalBtn = document.getElementById('acceptLegalBtn');
+    const legalTitle = document.getElementById('legal-title');
+    const legalContent = document.getElementById('legal-content');
+
+    const termsText = `
+        <h4>1. Taraflar</h4>
+        <p>İşbu Kullanıcı Sözleşmesi ("Sözleşme"), Urfa-Link uygulamasını ("Uygulama") kullanan kullanıcılar ("Kullanıcı") ile Uygulama'nın sahibi ve işletmecisi olan taraf ("Şirket") arasında akdedilmiştir.</p>
+        <h4>2. Kabul</h4>
+        <p>Kullanıcı, Uygulama'ya kayıt olarak veya Uygulama'yı kullanarak bu Sözleşme'de belirtilen şartları okuduğunu, anladığını ve bağlayıcı olarak kabul ettiğini beyan eder.</p>
+        <h4>3. Hizmetlerin İçeriği</h4>
+        <p>Urfa-Link, kullanıcıların diğer kullanıcılarla eşleşmesini ve iletişim kurmasını sağlayan bir platformdur.</p>
+        <h4>4. Kullanıcı Yükümlülükleri</h4>
+        <p>Kullanıcı, Uygulama'yı yasalara ve dürüstlük kurallarına uygun kullanmayı taahhüt eder. Her türlü zararlı, yasadışı, hakaret içerikli paylaşım yasaktır.</p>
+    `;
+
+    const kvkkText = `
+        <h4>1. Veri Sorumlusunun Kimliği</h4>
+        <p>Urfa-Link olarak, kişisel verilerinizin güvenliğine önem veriyoruz. İşbu metin 6698 sayılı Kişisel Verilerin Korunması Kanunu ("KVKK") kapsamında aydınlatma amacıyla hazırlanmıştır.</p>
+        <h4>2. Hangi Veriler İşleniyor?</h4>
+        <p>Sisteme kayıt olduğunuzda adınız, telefon numaranız, e-posta adresiniz, konumunuz ve profil bilgileriniz işlenmektedir.</p>
+        <h4>3. Veri İşleme Amacı</h4>
+        <p>Verileriniz size uygun eşleşme sağlamak, uygulama içi güvenliği artırmak ve kullanıcı kimlik doğrulaması yapmak için işlenmektedir.</p>
+        <h4>4. Haklarınız</h4>
+        <p>KVKK'nın 11. maddesi uyarınca verilerinizin silinmesini, güncellenmesini ve işlenip işlenmediğini öğrenme hakkına sahipsiniz.</p>
+    `;
+
+    if (termsLink) {
+        termsLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            legalTitle.textContent = "Kullanıcı Sözleşmesi";
+            legalContent.innerHTML = termsText;
+            legalOverlay.classList.remove('hidden');
+        });
+    }
+
+    if (kvkkLink) {
+        kvkkLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            legalTitle.textContent = "KVKK Aydınlatma Metni";
+            legalContent.innerHTML = kvkkText;
+            legalOverlay.classList.remove('hidden');
+        });
+    }
+
+    if (closeLegalBtn) {
+        closeLegalBtn.addEventListener('click', () => {
+            legalOverlay.classList.add('hidden');
+        });
+    }
+
+    if (acceptLegalBtn) {
+        acceptLegalBtn.addEventListener('click', () => {
+            legalOverlay.classList.add('hidden');
+            const consentCheckbox = document.getElementById('kvkk_consent');
+            if (consentCheckbox) consentCheckbox.checked = true;
+        });
     }
 
     // === Native Hardware Back Button via @capacitor/app ===

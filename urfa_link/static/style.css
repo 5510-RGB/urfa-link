@@ -23,13 +23,12 @@ body {
     background-color: var(--bg-color);
     color: var(--text-primary);
     min-height: 100dvh;
-    overflow-x: hidden;
+    overflow: hidden;
     display: flex;
     justify-content: center;
     align-items: center;
     position: relative;
-    padding-top: env(safe-area-inset-top);
-    padding-bottom: env(safe-area-inset-bottom);
+    /* Edge-to-Edge fix: removed body safe-area-inset padding */
 }
 
 /* Animated Background Shapes */
@@ -533,19 +532,18 @@ button:active {
 
 /* App Container acting like a mobile screen */
 .app-container {
-    width: 100%;
-    max-width: 500px;
-    height: 90dvh;
-    /* Mimic mobile aspect ratio height */
-    max-height: 900px;
+    width: 100vw;
+    height: 100dvh;
     background: var(--bg-color);
-    border: 1px solid var(--panel-border);
-    border-radius: 30px;
+    border: none;
+    border-radius: 0;
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-    position: relative;
+    box-shadow: none;
+    position: fixed;
+    top: 0;
+    left: 0;
     z-index: 10;
 }
 
@@ -554,12 +552,13 @@ button:active {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1rem 1.5rem;
+    padding: calc(1rem + env(safe-area-inset-top)) 1.5rem 1rem 1.5rem;
     border-bottom: 1px solid var(--panel-border);
     background: rgba(13, 17, 23, 0.9);
     backdrop-filter: blur(10px);
     z-index: 20;
     margin-bottom: 0;
+    flex-shrink: 0;
 }
 
 .glow-text.text-sm {
@@ -677,7 +676,7 @@ button:active {
     bottom: 0;
     left: 0;
     right: 0;
-    height: 70px;
+    height: calc(70px + env(safe-area-inset-bottom));
     background: rgba(22, 27, 34, 0.85);
     backdrop-filter: blur(15px);
     border-top: 1px solid var(--panel-border);

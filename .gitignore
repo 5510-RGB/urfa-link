@@ -1,0 +1,16 @@
+# Bağımlılıklar (Hata veren yer)
+node_modules/
+
+# Python Önbellek Dosyaları
+__pycache__/
+*.pyc
+
+# IDE ve Editör Ayarları
+.idea/
+.vscode/
+
+# Gizli Çevre Değişkenleri (Şifreler/API anahtarları içerir)
+.env
+
+# Yerel Veritabanları
+*.db

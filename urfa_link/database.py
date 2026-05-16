@@ -1,6 +1,9 @@
 import os
+from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
+
+load_dotenv()
 
 # Get the URL from environment
 raw_url = os.getenv("DATABASE_URL", "sqlite:///./urfa_link.db")
